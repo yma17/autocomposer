@@ -1,3 +1,5 @@
+package autocomposer;
+
 public class FourthSpeciesModel extends Model
 {
     private boolean[] suspensions; //each measure, suspensions? Yes or No?

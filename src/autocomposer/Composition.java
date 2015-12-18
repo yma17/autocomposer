@@ -1,3 +1,5 @@
+package autocomposer;
+
 public class Composition
 {
     private Model model;
@@ -10,19 +12,19 @@ public class Composition
     public int[][] compose() //composes the 2-voice counterpoint
     {
         int[][] composition = new int[2][model.numMeasures()];
-        int[] cantusFirmus = composeCantusFirmus(model);
+        int[] cantusFirmus = composeCantusFirmus();
         int[] secondVoice;
         for(int x = 0; x < model.numMeasures(); x++)
         {
             if(model.getCF())
             {
-                secondVoice = composeBottomVoice(model);
+                secondVoice = composeBottomVoice();
                 composition[0][x] = cantusFirmus[x];
                 composition[1][x] = secondVoice[x];
             }
             else
             {
-                secondVoice = composeTopVoice(model);
+                secondVoice = composeTopVoice();
                 composition[1][x] = cantusFirmus[x];
                 composition[0][x] = secondVoice[x];
             }

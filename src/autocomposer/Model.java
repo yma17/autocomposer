@@ -1,3 +1,5 @@
+package autocomposer;
+
 public class Model implements NotesAndKeys
 {
     public String key; // key of the counterpoint
@@ -20,7 +22,7 @@ public class Model implements NotesAndKeys
     }
     public String toString() //used for purpose of testing
     {
-        return key + " " + mode + " " + Integer.toString(measures) + " " + Boolean.toString(topLineisCF);
+        return key + " " + mode + " " + measures + " " + topLineisCF;
     }
     public String getKey()
     {
