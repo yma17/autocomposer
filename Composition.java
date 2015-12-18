@@ -1,11 +1,13 @@
 public class Composition
 {
+    private Model model;
     public static final int[] COUNTERPOINT_INTERVALS = {0,3,4,7,8,9,12};//intervals expressed in differences in MIDI numbers
     //0=unison, 3=minor 3rd, 4=Major 3rd, 7=Perfect 5th, 8=minor 6th, 9=Major 6th; 12=octave
-    public Composition()
+    public Composition(Model m)
     {
+        this.model = m;
     }
-    public int[][] compose(Model model) //composes the 2-voice counterpoint
+    public int[][] compose() //composes the 2-voice counterpoint
     {
         int[][] composition = new int[2][model.numMeasures()];
         int[] cantusFirmus = composeCantusFirmus(model);
@@ -27,19 +29,19 @@ public class Composition
         }
         return composition;
     }
-    private int[] composeCantusFirmus(Model model) //composes the cantus firmus
+    private int[] composeCantusFirmus() //composes the cantus firmus
     {
         int[] cantusFirmus = new int[model.numMeasures()];
         //insert code here
         return cantusFirmus;
     }
-    private int[] composeBottomVoice(Model model) //composes the bottom voice, in case the CF is the top voice
+    private int[] composeBottomVoice() //composes the bottom voice, in case the CF is the top voice
     {
         int[] bottomVoice = new int[model.numMeasures()];
         //insert code here
         return bottomVoice;
     }
-    private int[] composeTopVoice(Model model) //composes the top voice, in case the CF is the bottom voice;
+    private int[] composeTopVoice() //composes the top voice, in case the CF is the bottom voice;
     {
         int[] topVoice = new int[model.numMeasures()];
         //insert code here
