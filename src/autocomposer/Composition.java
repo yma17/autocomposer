@@ -1,6 +1,6 @@
 package autocomposer;
 
-public class Composition
+public class Composition implements NotesAndKeys
 {
     private Model model;
     public static final int[] COUNTERPOINT_INTERVALS = {0,3,4,7,8,9,12};//intervals expressed in differences in MIDI numbers
@@ -9,11 +9,11 @@ public class Composition
     {
         this.model = m;
     }
-    public int[][] compose() //composes the 2-voice counterpoint
+    public Note[][] compose() //composes the 2-voice counterpoint
     {
-        int[][] composition = new int[2][model.numMeasures()];
-        int[] cantusFirmus = composeCantusFirmus();
-        int[] secondVoice;
+        Note[][] composition = new Note[2][model.numMeasures()];
+        Note[] cantusFirmus = composeCantusFirmus();
+        Note[] secondVoice;
         for(int x = 0; x < model.numMeasures(); x++)
         {
             if(model.getCF())
@@ -31,29 +31,39 @@ public class Composition
         }
         return composition;
     }
-    private int[] composeCantusFirmus() //composes the cantus firmus
+    private Note[] composeCantusFirmus() //composes the cantus firmus
     {
-        int[] cantusFirmus = new int[model.numMeasures()];
-        //insert code here
+        Note[] cantusFirmus = new Note[model.numMeasures()];
+        
+        cantusFirmus[0] = new Note(model.getKey(), 4); //first note of the CF
+        
+        Note[] array = composeRestofCF();
+        for(int i = 1; i < cantusFirmus.length; i++)
+        	cantusFirmus[i] = array[i - 1];
+        
         return cantusFirmus;
     }
-    private int[] composeBottomVoice() //composes the bottom voice, in case the CF is the top voice
+    private Note[] composeRestofCF()
     {
-        int[] bottomVoice = new int[model.numMeasures()];
+    	
+    }
+    private Note[] composeBottomVoice() //composes the bottom voice, in case the CF is the top voice
+    {
+        Note[] bottomVoice = new Note[model.numMeasures()];
         //insert code here
         return bottomVoice;
     }
-    private int[] composeTopVoice() //composes the top voice, in case the CF is the bottom voice;
+    private Note[] composeTopVoice() //composes the top voice, in case the CF is the bottom voice;
     {
-        int[] topVoice = new int[model.numMeasures()];
+        Note[] topVoice = new Note[model.numMeasures()];
         //insert code here
         return topVoice;
     }
-    private void checkOneVoice(int[] voice) //check if one voice obeys the guidelines of counterpoint
+    private void checkOneVoice(Note[] voice) //check if one voice obeys the guidelines of counterpoint
     {
         //insert code here
     }
-    private void checkBothVoices(int[][] voices) //check if both voices obey the guidelines of counterpoint
+    private void checkBothVoices(Note[][] voices) //check if both voices obey the guidelines of counterpoint
     {
         //insert code here
     }
