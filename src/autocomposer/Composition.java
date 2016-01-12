@@ -35,7 +35,8 @@ public class Composition implements NotesAndKeys
     {
         Note[] cantusFirmus = new Note[model.numMeasures()];
         
-        cantusFirmus[0] = new Note(model.getKey(), 4); //first note of the CF
+        //TODO
+//        cantusFirmus[0] = new Note(model.getKey(), 4); //first note of the CF
         
         Note[] array = composeRestofCF();
         for(int i = 1; i < cantusFirmus.length; i++)
@@ -45,7 +46,7 @@ public class Composition implements NotesAndKeys
     }
     private Note[] composeRestofCF()
     {
-    	
+    	return new Note[0]; // temporary, so that it compiles
     }
     private Note[] composeBottomVoice() //composes the bottom voice, in case the CF is the top voice
     {

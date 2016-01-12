@@ -1,20 +1,31 @@
 package autocomposer;
 
-public class Note implements NotesAndKeys
+
+public class Note
 {
-	public int midiValue;
-	public String note;
 	
-	public Note(String note, int octave)
+//	public int midiValue;
+	public int pitch; // 0-11
+	public int octave; // 0-N
+	
+	public Note(int note, int octave)
 	{
-		this.note = note;
+		this.pitch = note;
+		this.octave = octave;
 		
-		int i = 0;
-		for(int x = 0; x < NOTES.length; x++)
-		{
-			if(NOTES[x].equals(note))
-				i = x;
-		}
-		midiValue = (12 * octave) + i + 12;
+//		int i = 0;
+//		for(int x = 0; x < NOTES.length; x++)
+//		{
+//			if(NOTES[x].equals(note))
+//				i = x;
+//		}
+	}
+	
+	public Note(int pitch) {
+		this(pitch, 4);
+	}
+	
+	public int midiValue() {
+		return (12 * this.octave) + this.pitch + 12;
 	}
 }
