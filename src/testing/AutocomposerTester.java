@@ -1,15 +1,21 @@
 package testing;
 
-import autocomposer.Composer;
+import autocomposer.Composition;
+import autocomposer.Model;
+import autocomposer.Note;
 
 public class AutocomposerTester
 {
 
 	public static void main(String[] args)
 	{
-		Composer composer = new Composer();
-		System.out.println(composer.method1(6));
+		Model m = new Model("D","Dorian",9);
+		Composition composer = new Composition(m);
 		
+		int x = composer.findPitch(m.getKey());
+		
+		Note n = new Note(x, 4);
+		System.out.println(n.midiValue());
 	}
 
 }
