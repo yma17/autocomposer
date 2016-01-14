@@ -31,7 +31,7 @@ public class Model implements NotesAndKeys
     {
         return mode;
     }
-    public int numMeasures()
+    public int getMeasures()
     {
         return measures;
     }

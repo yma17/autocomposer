@@ -5,12 +5,12 @@ public class Note
 {
 	
 //	public int midiValue;
-	public int pitch; // 0-11
+	public int pitch; // 0-11, 0 = C
 	public int octave; // 0-N
 	
-	public Note(int note, int octave)
+	public Note(int pitch, int octave)
 	{
-		this.pitch = note;
+		this.pitch = pitch;
 		this.octave = octave;
 		
 //		int i = 0;
