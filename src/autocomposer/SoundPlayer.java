@@ -12,7 +12,7 @@ public class SoundPlayer {
 	public static int MidiChannelNumber = 0; // Piano
 	public static int DefaultMidiVelocity = 80;
 	
-	public static int Duration = 1000;
+	public static int Duration = 2000;
 	
 	
 	private static Synthesizer synth = null;
@@ -50,5 +50,22 @@ public class SoundPlayer {
 		for( Note note : notes ){
 			this.play(note);
 		}
+	}
+	
+	public void play(Note[][] notes) {
+		for(int x = 0; x < notes.length; x++) {
+			int topValue = notes[0][x].midiValue();
+			int bottomValue = notes[1][x].midiValue();
+			this.channel.noteOn(topValue, DefaultMidiVelocity);
+			this.channel.noteOn(bottomValue, DefaultMidiVelocity);
+			try {
+				Thread.sleep(Duration);
+			} catch (InterruptedException e) {
+				System.err.println("[note playing interrupted]");
+			}
+			this.channel.noteOff(topValue);
+			this.channel.noteOff(bottomValue);
+		}
+			
 	}
 }
