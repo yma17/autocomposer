@@ -1,17 +1,20 @@
 package autocomposer;
 
+import autocomposer.Model;
+import autocomposer.Note;
+
+//import com.sun.javafx.sg.prism.NGShape.Mode;
+
 public class Composition implements NotesAndKeys
 {
     private Model model;
-    public static final int[] COUNTERPOINT_INTERVALS = {0,3,4,7,8,9,12};//intervals expressed in differences in MIDI numbers
-    //0=unison, 3=minor 3rd, 4=Major 3rd, 7=Perfect 5th, 8=minor 6th, 9=Major 6th; 12=octave
     public Composition(Model m)
     {
         this.model = m;
     }
     public Note[][] compose() //composes the 2-voice counterpoint
     {
-        Note[][] composition = new Note[2][model.getMeasures()];
+        Note[][] composition = new Note[2][model.getMeasures()]; //visually laid out
         Note[] cantusFirmus = composeCantusFirmus();
         Note[] secondVoice;
         for(int x = 0; x < model.getMeasures(); x++)
@@ -44,16 +47,49 @@ public class Composition implements NotesAndKeys
         Note[] cantusFirmus = new Note[model.getMeasures()];
         
         //TODO
-        cantusFirmus[0] = new Note(this.findPitch(model.getKey()), 4); //compose first note of the CF (tonic)
+        cantusFirmus[0] = new Note(this.findPitch(model.getKey())); //compose first note of the CF (tonic)
         cantusFirmus[cantusFirmus.length - 1] = cantusFirmus[0]; //compose last note of the CF (tonic)
         
-        @SuppressWarnings("unused")
 		int focalPoint = this.determineFocalPoint();
-        @SuppressWarnings("unused")
 		int preFPContourType = this.determinePreFPContour();
-        @SuppressWarnings("unused")
 		int postFPContourType = this.determinePostFPContour();
         
+        if(preFPContourType == 1) {
+        	int tonicToLowPointInterval = this.determineTonicToLPInterval();
+        	int leapToFPInterval = this.determineLeapToFPInterval(model.getMode(), tonicToLowPointInterval);
+        	
+        	int tonicToFPInterval = leapToFPInterval - tonicToLowPointInterval + 1;
+        	cantusFirmus[focalPoint] = new Note(this.findPitch(model.getKey() + DIATONIC_INTERVALS[tonicToFPInterval - 1])); //compose focal point
+        	
+        	int lowPoint = focalPoint - 1;
+        	if(leapToFPInterval == 8 && focalPoint >= 6) { //2-interval leap (1-interval if mode and tonic to low pt interval do not permit)
+        		double x = Math.random();
+        		if(x < 0.2) { //5th + 4th
+        			boolean b = this.checkFifthPlusFourth(model.getMode(), tonicToLowPointInterval);
+        			if(b) {
+        		        cantusFirmus[focalPoint - 2] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point
+        	            cantusFirmus[focalPoint - 1] = new Note(cantusFirmus[focalPoint - 2].getPitch() + 7);
+        			}
+        		}
+        		//if(x < 0.4) { //additional single note before focal point (include???)
+        			//cantusFirmus[focalPoint - 2] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point
+        			//TODO
+        		//}
+        		cantusFirmus[focalPoint - 1] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point
+        		lowPoint--;
+        	}
+        	else //single leap
+        		cantusFirmus[focalPoint - 1] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point
+        	
+        	
+        }
+        
+        else if(preFPContourType == 2) {
+        	//TODO
+        }
+        else if(preFPContourType == 3) {
+        	//TODO
+        }
         //TODO
         @SuppressWarnings("unused")
 		Note[] preFP = this.composePreFP(focalPoint, preFPContourType);
@@ -65,25 +101,35 @@ public class Composition implements NotesAndKeys
     private int determineFocalPoint() //helper method of composeCantusFirmus
     {
     	int n = model.getMeasures();
+    	double x = Math.random();
     	if(n == 9)
-    		return 4; //focal point is 5th note of cantus firmus in this case (what is returned minus 1)
+    		return 5; //focal point is 5th note of cantus firmus in this case (what is returned minus 1)
     	else if(n == 10)
-    		return 5;
-    	else if(n == 11)
     		return 6;
-    	else if(n == 12) {
-    		double x = Math.random();
+    	else if(n == 11) {
     		if(x < 0.5)
     			return 6;
     		else
     			return 7;
     	}
-    	else if(n == 13) {
-    		double x = Math.random();
-    		if(x < 0.5)
+    	else if(n == 12) {
+    	    if(x < 0.333)
+    	    	return 6;
+    		else if(x < 0.666)
     			return 7;
+    		else
+    			return 8;
     	}
-    	return 8;
+    	else { //13 measures
+    		if(x < 0.25)
+    			return 6;
+    		else if(x < 0.5)
+    			return 7;
+    		else if(x < 0.75)
+    			return 8;
+    		else
+    			return 9;
+    	}
     }
     private int determinePreFPContour() { //helper method of composeCantusFirmus. Determines the contour from the first note to the FP.
     	double x = Math.random();
@@ -101,6 +147,47 @@ public class Composition implements NotesAndKeys
     	else
     		return 2; //Type 2 = downward motion to below last note, then stepwise motion to last note
     }
+    private int determineTonicToLPInterval() { //Case I helper method
+    	double x = Math.random();
+    	return (int)(x * 4.0) + 2; //2 = 2nd, 3 = 3rd, etc. (will return 2-5)
+    }
+    private int determineLeapToFPInterval(String mode, int tonicToLP) { //Case I helper method
+    	double x = Math.random();
+    	if(tonicToLP == 2) {
+    		if(mode.equals("Lydian")) {
+    			if(x < 0.333)
+    				return 6; //ascending 6th
+    			x = Math.random();
+    		}
+    		if(mode.equals("Ionian")) {
+    			if(x < 0.5)
+    				return 6;
+    			x = Math.random();
+    		}
+    		if(x < 0.5 && !mode.equals("Ionian"))
+    			return 5; //perfect 5th
+    		else
+    			return 8; //octave (8ve)
+    	}
+        else if(tonicToLP == 3) {
+        	if(mode.equals("Dorian") || mode.equals("Mixolydian") || mode.equals("Ionian")) {
+        		if(x < 0.5)
+        			return 6;
+        	}
+        	return 8;
+    	}
+        else
+        	return 8;
+    }
+    private boolean checkFifthPlusFourth(String mode, int tonicToLPInterval) { //Case 1 helper method
+    	if((mode.equals("Dorian") && tonicToLPInterval == 3) ||
+    			(mode.equals("Phrygian") && tonicToLPInterval == 4) ||
+    			(mode.equals("Lydian") && tonicToLPInterval == 5) ||
+    			(mode.equals("Ionian") && tonicToLPInterval == 2)) //cases in which 5th+4th is not acceptable
+    		return false;
+    	return true;
+    }
+    //TODO
     private Note[] composePreFP(int focalPoint, int contourType) {
     	//TODO
     	return new Note[0]; //so that it compiles
