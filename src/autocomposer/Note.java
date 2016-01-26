@@ -12,6 +12,14 @@ public class Note
 	{
 		this.pitch = pitch;
 		this.octave = octave;
+		while(pitch < 0) {
+			pitch += 12;
+			octave--;
+		}
+		while(pitch > 12) {
+			pitch -= 12;
+			octave++;
+		}
 		
 //		int i = 0;
 //		for(int x = 0; x < NOTES.length; x++)
@@ -27,5 +35,11 @@ public class Note
 	
 	public int midiValue() {
 		return (12 * this.octave) + this.pitch + 12;
+	}
+	public int getPitch() {
+		return pitch;
+	}
+	public int getOctave() {
+		return octave;
 	}
 }
