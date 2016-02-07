@@ -16,7 +16,7 @@ public class Note
 			pitch += 12;
 			octave--;
 		}
-		while(pitch > 12) {
+		while(pitch >= 12) {
 			pitch -= 12;
 			octave++;
 		}
