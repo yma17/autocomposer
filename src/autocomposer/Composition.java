@@ -42,7 +42,7 @@ public class Composition implements NotesAndKeys
     	}
     	return pitch;
     }
-    private Note[] composeCantusFirmus() //composes the cantus firmus
+    public Note[] composeCantusFirmus() //composes the cantus firmus
     {
         Note[] cantusFirmus = new Note[model.getMeasures()];
         
@@ -52,49 +52,74 @@ public class Composition implements NotesAndKeys
         
 		int focalPoint = this.determineFocalPoint();
 		int preFPContourType = this.determinePreFPContour();
+		@SuppressWarnings("unused")
 		int postFPContourType = this.determinePostFPContour();
         
-        if(preFPContourType == 1) {
+        if(preFPContourType== 1) {
         	int tonicToLowPointInterval = this.determineTonicToLPInterval();
         	int leapToFPInterval = this.determineLeapToFPInterval(model.getMode(), tonicToLowPointInterval);
         	
         	int tonicToFPInterval = leapToFPInterval - tonicToLowPointInterval + 1;
-        	cantusFirmus[focalPoint] = new Note(this.findPitch(model.getKey() + DIATONIC_INTERVALS[tonicToFPInterval - 1])); //compose focal point
+        	cantusFirmus[focalPoint - 1] = new Note(this.findPitch(model.getKey()) + DIATONIC_INTERVALS[tonicToFPInterval - 1]); //compose focal point
         	
-        	int lowPoint = focalPoint - 1;
+			int lowPoint = focalPoint - 1;
         	if(leapToFPInterval == 8 && focalPoint >= 6) { //2-interval leap (1-interval if mode and tonic to low pt interval do not permit)
         		double x = Math.random();
         		if(x < 0.2) { //5th + 4th
         			boolean b = this.checkFifthPlusFourth(model.getMode(), tonicToLowPointInterval);
         			if(b) {
-        		        cantusFirmus[focalPoint - 2] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point
-        	            cantusFirmus[focalPoint - 1] = new Note(cantusFirmus[focalPoint - 2].getPitch() + 7);
+        		        cantusFirmus[lowPoint - 2] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point
+        	            cantusFirmus[lowPoint - 1] = new Note(cantusFirmus[focalPoint - 1].getPitch() + 7);
         			}
         		}
         		//if(x < 0.4) { //additional single note before focal point (include???)
         			//cantusFirmus[focalPoint - 2] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point
         			//TODO
         		//}
-        		cantusFirmus[focalPoint - 1] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point
+        		cantusFirmus[lowPoint - 1] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point
         		lowPoint--;
         	}
         	else //single leap
-        		cantusFirmus[focalPoint - 1] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point
-        	
-        	
+        		cantusFirmus[lowPoint - 1] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point 	
         }
-        
         else if(preFPContourType == 2) {
         	//TODO
         }
         else if(preFPContourType == 3) {
         	//TODO
         }
-        //TODO
-        @SuppressWarnings("unused")
-		Note[] preFP = this.composePreFP(focalPoint, preFPContourType);
-        @SuppressWarnings("unused")
-		Note[] postFP = this.composePostFP(focalPoint, postFPContourType);
+
+        //@SuppressWarnings("unused")
+		//Note[] preFP = this.composePreFP(focalPoint, preFPContourType);
+        
+        //determine 2nd note
+        double w = Math.random();
+        if(w < 0.5)
+        	cantusFirmus[1] = new Note(this.findPitch(model.getKey()) + DIATONIC_INTERVALS[determineSecondNote(w) - 1]);
+        else
+        	cantusFirmus[1] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[determineSecondNote(w) - 1]);
+        
+        //determine pre focal point
+        for(int x = 2; x < focalPoint - 3; x++) {
+        	cantusFirmus[x] = composeNextNote(x, lastInterval, twoIntervalsBefore, lastDirection, twoDirectionsBefore); //TODO
+        }
+        
+        //determine 2nd to last note
+        double z = Math.random();
+        if(z < 0.5)
+        	cantusFirmus[cantusFirmus.length - 2] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[1]); //step up
+        else
+        	cantusFirmus[cantusFirmus.length - 2] = new Note(this.findPitch(model.getKey()) + DIATONIC_INTERVALS[1]); //step down
+        
+        //@SuppressWarnings("unused")
+		//Note[] postFP = this.composePostFP(model.getMeasures(), focalPoint, postFPContourType);
+        
+        /*
+        for(int x = 0; x < preFP.length; x++)
+        	cantusFirmus[x + 1] = preFP[x];
+        for(int x = postFP.length; x > 0; x--)
+        	cantusFirmus[x - 2] = postFP[x];
+        */
         
         return cantusFirmus;
     }
@@ -187,15 +212,49 @@ public class Composition implements NotesAndKeys
     		return false;
     	return true;
     }
+    private int determineSecondNote(double w) { //returns 1-2 interval
+    	if(w >= 0.5)
+    		w -= 0.5;
+    	return (int)w*8 + 2; //returns number between 2 and 5
+    }
+    
+    private Note composeNextNote(int location, int lastInterval, int twoIntervalsBefore, boolean lastDirection, boolean twoDirectionsBefore) {
+    	Note note;
+    	boolean directionIsUp = determineDirection(lastInterval, twoIntervalsBefore, lastDirection, twoDirectionsBefore);
+    	int interval = determineInterval();
+    	boolean valid = determineValidity(directionIsUp, interval);
+    	if(!valid)
+    		note= composeNextNote(location, lastInterval, twoIntervalsBefore, lastDirection, twoDirectionsBefore); //try again
+    	else
+    		//compose
+    	return note;
+    }
+    private boolean determineDirection(int lastInterval, int twoIntervalsBefore, boolean lastDirection, boolean twoDirectionsBefore) {
+    	if()
+    }
+    private int determineInterval() {
+    	
+    }
+    private boolean determineValidity(boolean direction, int interval) {
+    	
+    }
+    
     //TODO
+    /*
     private Note[] composePreFP(int focalPoint, int contourType) {
+    	Note[] preFP = new Note[focalPoint - 3];
+    	
+    	
     	//TODO
     	return new Note[0]; //so that it compiles
     }
-    private Note[] composePostFP(int focalPoint, int contourType) {
+    private Note[] composePostFP(int measures, int focalPoint, int contourType) {
+    	Note postFP = new Note[measures - focalPoint - 2];
+    	
     	//TODO
     	return new Note[0]; //so that it compiles
     }
+    */
     private Note[] composeBottomVoice() //composes the bottom voice, in case the CF is the top voice
     {
         Note[] bottomVoice = new Note[model.getMeasures()];
@@ -208,12 +267,4 @@ public class Composition implements NotesAndKeys
         //insert code here
         return topVoice;
     }
-    //private void checkOneVoice(Note[] voice) //check if one voice obeys the guidelines of counterpoint
-    //{
-        //insert code here
-    //}
-    //private void checkBothVoices(Note[][] voices) //check if both voices obey the guidelines of counterpoint
-    //{
-        //insert code here
-    //}
 }
