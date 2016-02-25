@@ -60,7 +60,7 @@ public class Composition implements NotesAndKeys
         	int leapToFPInterval = this.determineLeapToFPInterval(model.getMode(), tonicToLowPointInterval);
         	
         	int tonicToFPInterval = leapToFPInterval - tonicToLowPointInterval + 1;
-        	cantusFirmus[focalPoint - 1] = new Note(this.findPitch(model.getKey()) + DIATONIC_INTERVALS[tonicToFPInterval - 1]); //compose focal point
+        	cantusFirmus[focalPoint - 1] = new Note(this.findPitch(model.getKey()) + DIATONIC_INTERVALS[model.getModeValue()%7 + tonicToFPInterval - 1]); //compose focal point
         	
 			int lowPoint = focalPoint - 1;
         	if(leapToFPInterval == 8 && focalPoint >= 6) { //2-interval leap (1-interval if mode and tonic to low pt interval do not permit)
@@ -68,7 +68,7 @@ public class Composition implements NotesAndKeys
         		if(x < 0.2) { //5th + 4th
         			boolean b = this.checkFifthPlusFourth(model.getMode(), tonicToLowPointInterval);
         			if(b) {
-        		        cantusFirmus[lowPoint - 2] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point
+        		        cantusFirmus[lowPoint - 2] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[model.getModeValue()%7 + tonicToLowPointInterval - 1]); //compose low point
         	            cantusFirmus[lowPoint - 1] = new Note(cantusFirmus[focalPoint - 1].getPitch() + 7);
         			}
         		}
@@ -76,11 +76,11 @@ public class Composition implements NotesAndKeys
         			//cantusFirmus[focalPoint - 2] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point
         			//TODO
         		//}
-        		cantusFirmus[lowPoint - 1] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point
+        		cantusFirmus[lowPoint - 1] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[model.getModeValue()%7 + tonicToLowPointInterval - 1]); //compose low point
         		lowPoint--;
         	}
         	else //single leap
-        		cantusFirmus[lowPoint - 1] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point 	
+        		cantusFirmus[lowPoint - 1] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[model.getModeValue()%7 + tonicToLowPointInterval - 1]); //compose low point 	
         }
         else if(preFPContourType == 2) {
         	//TODO
@@ -95,9 +95,9 @@ public class Composition implements NotesAndKeys
         //determine 2nd note
         double w = Math.random();
         if(w < 0.5)
-        	cantusFirmus[1] = new Note(this.findPitch(model.getKey()) + DIATONIC_INTERVALS[determineSecondNote(w) - 1]);
+        	cantusFirmus[1] = new Note(this.findPitch(model.getKey()) + DIATONIC_INTERVALS[model.getModeValue()%7 + determineSecondNote(w) - 1]);
         else
-        	cantusFirmus[1] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[determineSecondNote(w) - 1]);
+        	cantusFirmus[1] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[model.getModeValue()%7 + determineSecondNote(w) - 1]);
         
         //determine pre focal point
         for(int x = 2; x < focalPoint - 3; x++) {
@@ -107,9 +107,9 @@ public class Composition implements NotesAndKeys
         //determine 2nd to last note
         double z = Math.random();
         if(z < 0.5)
-        	cantusFirmus[cantusFirmus.length - 2] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[1]); //step up
+        	cantusFirmus[cantusFirmus.length - 2] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[model.getModeValue()%7 + 1]); //step up
         else
-        	cantusFirmus[cantusFirmus.length - 2] = new Note(this.findPitch(model.getKey()) + DIATONIC_INTERVALS[1]); //step down
+        	cantusFirmus[cantusFirmus.length - 2] = new Note(this.findPitch(model.getKey()) + DIATONIC_INTERVALS[model.getModeValue()%7 + 1]); //step down
         
         //@SuppressWarnings("unused")
 		//Note[] postFP = this.composePostFP(model.getMeasures(), focalPoint, postFPContourType);
@@ -220,8 +220,8 @@ public class Composition implements NotesAndKeys
     
     private Note composeNextNote(int location, int lastInterval, int twoIntervalsBefore, boolean lastDirection, boolean twoDirectionsBefore) {
     	Note note;
-    	boolean directionIsUp = determineDirection(lastInterval, twoIntervalsBefore, lastDirection, twoDirectionsBefore);
-    	int interval = determineInterval();
+    	boolean directionIsUp = determineDirection(lastInterval, lastDirection, twoDirectionsBefore);
+    	int interval = determineInterval(directionIsUp);
     	boolean valid = determineValidity(directionIsUp, interval);
     	if(!valid)
     		note= composeNextNote(location, lastInterval, twoIntervalsBefore, lastDirection, twoDirectionsBefore); //try again
@@ -229,11 +229,79 @@ public class Composition implements NotesAndKeys
     		//compose
     	return note;
     }
-    private boolean determineDirection(int lastInterval, int twoIntervalsBefore, boolean lastDirection, boolean twoDirectionsBefore) {
-    	if()
+    private boolean determineDirection(int lastInterval, boolean lastDirection, boolean twoDirectionsBefore) {
+    	double x = Math.random();
+    	if(lastInterval == 2) {
+    		if(x < 0.5)
+    			return true; //up
+    		else
+    			return false; //down
+    	}
+    	else {
+    		if(lastDirection == false) { //below- note two notes ago is below the last note
+    			if(twoDirectionsBefore == false)
+    				return false;
+    			else {
+    				if(x < 0.5)
+    	    			return true; //up
+    	    		else
+    	    			return false; //down
+    			}
+    		}
+    		else {
+    			if(lastDirection == true)
+    				return true;
+    			else {
+    				if(x < 0.5)
+    	    			return true; //up
+    	    		else
+    	    			return false; //down
+    			}
+    		}
+    	}
     }
-    private int determineInterval() {
-    	
+    private int determineInterval(boolean direction, int lastInterval, int twoIntervalsBefore, boolean lastDirection, boolean twoDirectionsBefore) {
+    	double x = Math.random();
+    	if(lastInterval == 2) { //step- anything is fine
+    		/*
+			if(x < 0.5)
+    			return 2;
+    		else if(x < 0.8)
+    			return 3;
+    		else if(x < 0.9)
+    			return 4;
+    		else
+    			return 5;
+    		*/
+    		if(lastDirection == twoDirectionsBefore) {
+    			if(x < 0.5)
+					return 2;
+				else
+					return 3;
+    		}
+    		else {
+    			if(x < 0.5)
+					return 2;
+				else if(x < 0.9)
+					return 3;
+				else
+					return 4;
+    		}
+		}
+		else { //leap
+			if(lastDirection == twoDirectionsBefore) {
+				if(x < 0.5)
+					return 2;
+				else
+					return 3;
+			}
+			else {
+				if(x < 0.5)
+					return 2;
+				else if(x < 0.8)
+					return 3;
+				
+		}
     }
     private boolean determineValidity(boolean direction, int interval) {
     	
