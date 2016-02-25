@@ -2,34 +2,36 @@ package autocomposer;
 
 import autocomposer.Model;
 import autocomposer.Note;
+import java.util.ArrayList;
 
 //import com.sun.javafx.sg.prism.NGShape.Mode;
 
 public class Composition implements NotesAndKeys
 {
-    private Model model;
+    //counterpoint composed- visually laid out
+	private Note[] cantusFirmus;
+    private Note[] counterpoint; //may be written on top or below CF
+    public Model model;
     public Composition(Model m)
     {
         this.model = m;
     }
     public Note[][] compose() //composes the 2-voice counterpoint
     {
-        Note[][] composition = new Note[2][model.getMeasures()]; //visually laid out
-        Note[] cantusFirmus = composeCantusFirmus();
-        Note[] secondVoice;
+        Note[][] composition = new Note[2][model.getMeasures()];
+    	cantusFirmus = composeCantusFirmus();
+        counterpoint = composeCounterpoint(model.getCF());
         for(int x = 0; x < model.getMeasures(); x++)
         {
             if(model.getCF())
             {
-                secondVoice = composeBottomVoice();
                 composition[0][x] = cantusFirmus[x];
-                composition[1][x] = secondVoice[x];
+                composition[1][x] = counterpoint[x];
             }
             else
             {
-                secondVoice = composeTopVoice();
                 composition[1][x] = cantusFirmus[x];
-                composition[0][x] = secondVoice[x];
+                composition[0][x] = counterpoint[x];
             }
         }
         return composition;
@@ -52,8 +54,7 @@ public class Composition implements NotesAndKeys
         
 		int focalPoint = this.determineFocalPoint();
 		int preFPContourType = this.determinePreFPContour();
-		@SuppressWarnings("unused")
-		int postFPContourType = this.determinePostFPContour();
+		//int postFPContourType = this.determinePostFPContour();
         
         if(preFPContourType== 1) {
         	int tonicToLowPointInterval = this.determineTonicToLPInterval();
@@ -82,12 +83,14 @@ public class Composition implements NotesAndKeys
         	else //single leap
         		cantusFirmus[lowPoint - 1] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[model.getModeValue()%7 + tonicToLowPointInterval - 1]); //compose low point 	
         }
+        /*
         else if(preFPContourType == 2) {
         	//TODO
         }
         else if(preFPContourType == 3) {
         	//TODO
         }
+        */
 
         //@SuppressWarnings("unused")
 		//Note[] preFP = this.composePreFP(focalPoint, preFPContourType);
@@ -101,7 +104,7 @@ public class Composition implements NotesAndKeys
         
         //determine pre focal point
         for(int x = 2; x < focalPoint - 3; x++) {
-        	cantusFirmus[x] = composeNextNote(x, lastInterval, twoIntervalsBefore, lastDirection, twoDirectionsBefore); //TODO
+        	//cantusFirmus[x] = composeNextNote(x, lastInterval, twoIntervalsBefore, lastDirection, twoDirectionsBefore); //TODO
         }
         
         //determine 2nd to last note
@@ -217,96 +220,31 @@ public class Composition implements NotesAndKeys
     		w -= 0.5;
     	return (int)w*8 + 2; //returns number between 2 and 5
     }
-    
-    private Note composeNextNote(int location, int lastInterval, int twoIntervalsBefore, boolean lastDirection, boolean twoDirectionsBefore) {
-    	Note note;
-    	boolean directionIsUp = determineDirection(lastInterval, lastDirection, twoDirectionsBefore);
-    	int interval = determineInterval(directionIsUp);
-    	boolean valid = determineValidity(directionIsUp, interval);
-    	if(!valid)
-    		note= composeNextNote(location, lastInterval, twoIntervalsBefore, lastDirection, twoDirectionsBefore); //try again
-    	else
-    		//compose
-    	return note;
-    }
-    private boolean determineDirection(int lastInterval, boolean lastDirection, boolean twoDirectionsBefore) {
-    	double x = Math.random();
-    	if(lastInterval == 2) {
-    		if(x < 0.5)
-    			return true; //up
-    		else
-    			return false; //down
-    	}
-    	else {
-    		if(lastDirection == false) { //below- note two notes ago is below the last note
-    			if(twoDirectionsBefore == false)
-    				return false;
-    			else {
-    				if(x < 0.5)
-    	    			return true; //up
-    	    		else
-    	    			return false; //down
-    			}
-    		}
-    		else {
-    			if(lastDirection == true)
-    				return true;
-    			else {
-    				if(x < 0.5)
-    	    			return true; //up
-    	    		else
-    	    			return false; //down
-    			}
-    		}
-    	}
-    }
-    private int determineInterval(boolean direction, int lastInterval, int twoIntervalsBefore, boolean lastDirection, boolean twoDirectionsBefore) {
-    	double x = Math.random();
-    	if(lastInterval == 2) { //step- anything is fine
-    		/*
-			if(x < 0.5)
-    			return 2;
-    		else if(x < 0.8)
-    			return 3;
-    		else if(x < 0.9)
-    			return 4;
-    		else
-    			return 5;
-    		*/
-    		if(lastDirection == twoDirectionsBefore) {
-    			if(x < 0.5)
-					return 2;
-				else
-					return 3;
-    		}
-    		else {
-    			if(x < 0.5)
-					return 2;
-				else if(x < 0.9)
-					return 3;
-				else
-					return 4;
-    		}
-		}
-		else { //leap
-			if(lastDirection == twoDirectionsBefore) {
-				if(x < 0.5)
-					return 2;
-				else
-					return 3;
-			}
-			else {
-				if(x < 0.5)
-					return 2;
-				else if(x < 0.8)
-					return 3;
-				
-		}
-    }
-    private boolean determineValidity(boolean direction, int interval) {
+    /*
+    public Note[] composeNoteByNote(int notesToBeComposed, Note[] previousNotes, ArrayList<Note> futureNotes) { //composes all notes in an empty section
+    	Note[] arr = new Note[notesToBeComposed];
     	
+    	for(int x = 0; x < arr.length; x++) {
+    		//special structures here
+    		double y = Math.random();
+    		if(y < 0.1) {
+    			//composeConsecutiveSteps;
+    		}
+    		else if(y < 0.2) {
+    			//composeTriad;
+            }
+    		
+    		//main note-to-note algorithm
+    		Note nextNote = decideNextNote(previousNotes, futureNotes);
+            arr[x] = nextNote;
+    	}
+    	return arr;
     }
     
+    private Note decideNextNote(Note[] previousNotes, ArrayList<Note> futureNotes) {
+    	return new Note[0];
+    }
+    */
     //TODO
     /*
     private Note[] composePreFP(int focalPoint, int contourType) {
@@ -323,6 +261,13 @@ public class Composition implements NotesAndKeys
     	return new Note[0]; //so that it compiles
     }
     */
+    
+    private Note[] composeCounterpoint(boolean istopLineCF) {
+    	if(istopLineCF)
+    		return composeBottomVoice();
+    	else
+    		return composeTopVoice();
+    }
     private Note[] composeBottomVoice() //composes the bottom voice, in case the CF is the top voice
     {
         Note[] bottomVoice = new Note[model.getMeasures()];
