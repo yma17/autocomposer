@@ -5,6 +5,7 @@ public class Model implements NotesAndKeys
     public String key; // key of the counterpoint
     public String mode; //mode of the counterpoint
     public int measures; //number of measures
+    public int modeValue; //to make DIATONIC_INTERVALS compatible with any mode (Ionian-0, Dorian-1, Phrygian-2, Lydian-3, Mixolydian-4, Aeolian-5)
     public boolean topLineisCF; //whether top line is cantus firmus(CF)
     public Model() //in absence in user control, generate random key, mode, length, CF
     {
@@ -16,6 +17,20 @@ public class Model implements NotesAndKeys
     {
         this.key = key;
         this.mode = mode;
+        
+        if(mode.equals("Ionian"))
+        	modeValue = 0;
+        else if(mode.equals("Dorian"))
+        	modeValue = 1;
+        else if(mode.equals("Phrygian"))
+        	modeValue = 2;
+        else if(mode.equals("Lydian"))
+        	modeValue = 3;
+        else if(mode.equals("Mixolydian"))
+        	modeValue = 4;
+        else
+        	modeValue = 5; //Aeolian
+        
         this.measures = measures;
         topLineisCF = determineCF();
     }
@@ -30,6 +45,10 @@ public class Model implements NotesAndKeys
     public String getMode()
     {
         return mode;
+    }
+    public int getModeValue()
+    {
+    	return modeValue;
     }
     public int getMeasures()
     {
