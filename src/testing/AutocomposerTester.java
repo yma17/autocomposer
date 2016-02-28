@@ -1,6 +1,5 @@
 package testing;
 
-import java.util.Arrays;
 
 import autocomposer.Composition;
 import autocomposer.Model;
@@ -12,6 +11,12 @@ public class AutocomposerTester implements NotesAndKeys
 
 	public static void main(String[] args)
 	{
+		Model x = new Model("B","Aeolian",9);
+		Composition z = new Composition(x);
+		Note n = new Note(1);
+		int i = z.findMIDIInterval(n, -3);
+		System.out.println(i);
+		/*
 		Model a = new Model("C","Ionian",9);
 		Model b = new Model("D","Dorian",9);
 		Model c = new Model("E","Phrygian",9);
@@ -26,14 +31,8 @@ public class AutocomposerTester implements NotesAndKeys
 		Composition composer5 = new Composition(e);
 		Composition composer6 = new Composition(f);
 		
-		/*
-		int x = composer.findPitch(m.getKey()) + DIATONIC_INTERVALS[4];
 		
-		Note n = new Note(x, 4);
-		System.out.println(n.midiValue());
-		*/
 		
-		//System.out.println(composer.findPitch("G-flat"));
 		Note[] array1 = composer1.composeCantusFirmus();
 
 		for(int x = 0; x < array1.length; x++) {
@@ -78,5 +77,12 @@ public class AutocomposerTester implements NotesAndKeys
 				System.out.println(x + " " + array6[x].midiValue());
 			}
 		}
+		
+		*/
+		
+		String[] arr = x.getSpecificArray();
+		for(int q = 0; q < arr.length; q++)
+			System.out.println(arr[q]);
+        
 	}
 }

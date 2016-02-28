@@ -1,7 +1,7 @@
 package autocomposer;
 
 
-public class Note
+public class Note implements NotesAndKeys
 {
 	
 //	public int midiValue;
@@ -38,6 +38,9 @@ public class Note
 	}
 	public int getPitch() {
 		return pitch;
+	}
+	public String getNoteName() {
+		return NOTES[pitch];
 	}
 	public int getOctave() {
 		return octave;

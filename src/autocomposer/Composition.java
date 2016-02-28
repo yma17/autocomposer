@@ -1,8 +1,10 @@
 package autocomposer;
 
+import java.util.Arrays;
+
 import autocomposer.Model;
 import autocomposer.Note;
-import java.util.ArrayList;
+//import java.util.ArrayList;
 
 //import com.sun.javafx.sg.prism.NGShape.Mode;
 
@@ -44,6 +46,7 @@ public class Composition implements NotesAndKeys
     	}
     	return pitch;
     }
+    /*
     public int findMIDIInterval(int interval) {
     	/*
     	int x = 0;
@@ -98,6 +101,90 @@ public class Composition implements NotesAndKeys
     			return IONIAN_DIATONIC_INTERVALS[interval-1];
         */
         
+    public int findMIDIInterval(Note previous, int interval) {
+    	int x = 0;
+    	String[] arr = model.getSpecificArray();
+    	String lastNoteName = previous.getNoteName();
+    	for(int a = 0; a < arr.length; a++) {
+    		if(arr[a].equals(lastNoteName))
+    			x = a;
+    	}
+    	
+    	//determine note name of desired note
+    	int z;
+    	if(interval < 0)
+    		z = x + (interval + 1);
+    	else
+    		z = x + (interval - 1);
+    	boolean cycle = false; //around the ends of the array
+    	boolean bottomToTop = false; //nature of the cycle, if any
+    	if(z < 0 || z >= 7) {
+    		if(z < 0) {
+    			z += 7;
+    			bottomToTop = true;
+    		}
+    		cycle = true;
+    	}
+    	String thisNoteName = arr[z%7];
+    	
+    	if(lastNoteName.indexOf("double") >= 0)
+    		lastNoteName = manageDoubleAccidentals(lastNoteName);
+    	else if(thisNoteName.indexOf("double") >= 0)
+    		thisNoteName = manageDoubleAccidentals(thisNoteName);
+
+    	//check octaves
+    	if(cycle) {
+    		if(bottomToTop)
+    			return ((this.findNoteIndex(thisNoteName)) - (this.findNoteIndex(lastNoteName))) - 12;
+    		else
+    			return 12-((this.findNoteIndex(thisNoteName)) - (this.findNoteIndex(lastNoteName)));
+    		/*
+    		else {
+    			if(b2 > 0)
+    				return this.findNoteIndex(ch1)+ b2 - (this.findNoteIndex(ch2)+b1); //a
+    			else
+    				return (this.findNoteIndex(ch2)+ b2) - (this.findNoteIndex(ch1)+b1);
+    				
+    		}
+    		*/
+    	}
+    	
+    	else {
+    		if(interval < 0) {
+    			if((this.findNoteIndex(thisNoteName)) > (this.findNoteIndex(lastNoteName)))
+    				return (this.findNoteIndex(thisNoteName)) - (this.findNoteIndex(lastNoteName)+12); //b
+    		}
+    		if(interval > 0) {
+    			if((this.findNoteIndex(thisNoteName)) < (this.findNoteIndex(lastNoteName)))
+    				return (this.findNoteIndex(thisNoteName)+12) - (this.findNoteIndex(lastNoteName));
+    		}
+    		return (this.findNoteIndex(thisNoteName)) - (this.findNoteIndex(lastNoteName));
+    	}
+    }
+    public int findNoteIndex(String note) { //finds index of a note on the NOTES array
+    	int a = 0;
+    	if(note.indexOf("sharp") >= 0) {
+    		for(int x = 0; x < NOTES_SHARPS.length; x++) {
+    			if(NOTES_SHARPS[x].equals(note))
+    				a = x;
+    		}
+    	}
+    	else {
+    		for(int x = 0; x < NOTES.length; x++) {
+    			if(NOTES[x].equals(note))
+    				a = x;
+    		}
+    	}
+    	return a;
+    }
+    public String manageDoubleAccidentals(String note) { //precondition: note contains "double"
+    	String str = note.substring(0,1);
+    	String returnString;
+    	if(note.indexOf("sharp")>=0)
+    		returnString = BASIC_NOTES[Arrays.binarySearch(BASIC_NOTES, str) + 1];
+    	else
+    		returnString = BASIC_NOTES[Arrays.binarySearch(BASIC_NOTES, str) - 1];
+    	return returnString;
     }
     public Note[] composeCantusFirmus() //composes the cantus firmus
     {
@@ -116,7 +203,7 @@ public class Composition implements NotesAndKeys
         	int leapToFPInterval = this.determineLeapToFPInterval(model.getMode(), tonicToLowPointInterval);
         	
         	int tonicToFPInterval = leapToFPInterval + tonicToLowPointInterval + 1;
-        	cantusFirmus[focalPoint - 1] = new Note(findPitch(model.getKey()) + this.findMIDIInterval(tonicToFPInterval)); //compose focal point
+        	cantusFirmus[focalPoint - 1] = new Note(findPitch(model.getKey()) + findMIDIInterval(cantusFirmus[0],tonicToFPInterval)); //compose focal point
 
 			int lowPoint = focalPoint - 1;
         	if(leapToFPInterval == 8 && focalPoint >= 6) { //2-interval leap (1-interval if mode and tonic to low pt interval do not permit)
@@ -124,7 +211,7 @@ public class Composition implements NotesAndKeys
         		if(x < 0.2) { //5th + 4th
         			boolean b = this.checkFifthPlusFourth(model.getMode(), tonicToLowPointInterval);
         			if(b) {
-        		        cantusFirmus[lowPoint - 2] = new Note(this.findPitch(model.getKey()) + this.findMIDIInterval(tonicToLowPointInterval)); //compose low point
+        		        cantusFirmus[lowPoint - 2] = new Note(this.findPitch(model.getKey()) + this.findMIDIInterval(cantusFirmus[0],tonicToLowPointInterval)); //compose low point
         	            cantusFirmus[lowPoint - 1] = new Note(cantusFirmus[focalPoint - 1].getPitch() + 7);
         			}
         		}
@@ -132,11 +219,11 @@ public class Composition implements NotesAndKeys
         			//cantusFirmus[focalPoint - 2] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point
         			//TODO
         		//}
-        		cantusFirmus[lowPoint - 1] = new Note(this.findPitch(model.getKey()) + this.findMIDIInterval(tonicToLowPointInterval)); //compose low point
+        		cantusFirmus[lowPoint - 1] = new Note(this.findPitch(model.getKey()) + this.findMIDIInterval(cantusFirmus[0],tonicToLowPointInterval)); //compose low point
         		lowPoint--;
         	}
         	else //single leap
-        		cantusFirmus[lowPoint - 1] = new Note(this.findPitch(model.getKey()) + this.findMIDIInterval(tonicToLowPointInterval)); //compose low point 	
+        		cantusFirmus[lowPoint - 1] = new Note(this.findPitch(model.getKey()) + this.findMIDIInterval(cantusFirmus[0],tonicToLowPointInterval)); //compose low point 	
         }
         /*
         else if(preFPContourType == 2) {
@@ -168,10 +255,9 @@ public class Composition implements NotesAndKeys
         //determine 2nd to last note
         double z = Math.random();
         if(z < 0.5)
-        	cantusFirmus[cantusFirmus.length - 2] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[model.getModeValue() + 1] - DIATONIC_INTERVALS[model.getModeValue()]); //step up
+        	cantusFirmus[cantusFirmus.length - 2] = new Note(this.findPitch(model.getKey()) + findMIDIInterval(cantusFirmus[0],2)); //step down
         else
-        	cantusFirmus[cantusFirmus.length - 2] = new Note(this.findPitch(model.getKey()) + DIATONIC_INTERVALS[model.getModeValue() + 1] - DIATONIC_INTERVALS[model.getModeValue()]); //step down
-        
+        	cantusFirmus[cantusFirmus.length - 2] = new Note(this.findPitch(model.getKey()) + findMIDIInterval(cantusFirmus[0],-2)); //step up
         //@SuppressWarnings("unused")
 		//Note[] postFP = this.composePostFP(model.getMeasures(), focalPoint, postFPContourType);
         
@@ -229,13 +315,6 @@ public class Composition implements NotesAndKeys
     	*/
     	return 1;
     }
-    private int determinePostFPContour() { //helper method of composeCantusFirmus. Determines the contour from the FP to the last note.
-    	double x = Math.random();
-    	if(x < 0.5)
-    		return 1; //Type 1 = gradual motion downwards towards last note
-    	else
-    		return 2; //Type 2 = downward motion to below last note, then stepwise motion to last note
-    }
     private int determineTonicToLPInterval() { //Case I helper method
     	double x = Math.random();
     	return (int)(x * 4.0) - 5; //-2 = 2nd, -3 = 3rd, etc. (will return -2-(-5))
@@ -275,9 +354,6 @@ public class Composition implements NotesAndKeys
     			(mode.equals("Ionian") && tonicToLPInterval == 2)) //cases in which 5th+4th is not acceptable
     		return false;
     	return true;
-    }
-    private int determineSecondNote(double w) { //returns 1-2 interval
-    	return (int)w*4 + 2; //returns number between 2 and 5
     }
     /*
     public Note[] composeNoteByNote(int notesToBeComposed, Note[] previousNotes, ArrayList<Note> futureNotes) { //composes all notes in an empty section
