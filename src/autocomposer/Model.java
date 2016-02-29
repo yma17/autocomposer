@@ -9,6 +9,7 @@ public class Model implements NotesAndKeys
     public int modeValue; //to make DIATONIC_INTERVALS compatible with any mode (Ionian-0, Dorian-1, Phrygian-2, Lydian-3, Mixolydian-4, Aeolian-5)
     public boolean topLineisCF; //whether top line is cantus firmus(CF)
     public String[] specificNotes; //specific notes of the key and mode
+    public boolean sharp; //sharp key?
     public Model() //in absence in user control, generate random key, mode, length, CF
     {
     	mode = determineKeyAndMode();
@@ -47,6 +48,27 @@ public class Model implements NotesAndKeys
         topLineisCF = determineCF();
         
         this.specificNotes = determineSpecificNotes();
+        
+        if(key.equals("F-sharp") || key.equals("B"))
+        	sharp = true;
+        else if(key.equals("E")) {
+        	if(!mode.equals("Phrygian"))
+        		sharp = true;
+        }
+        else if(key.equals("A")) {
+        	if(!mode.equals("Phrygian") && !mode.equals("Aeolian"))
+        		sharp = true;
+        }
+        else if(key.equals("D")) {
+        	if(mode.equals("Ionian") || mode.equals("Lydian") || mode.equals("Mixolydian"))
+        		sharp = true;
+        }
+        else if(key.equals("G")) {
+        	if(mode.equals("Ionian") || mode.equals("Lydian"))
+        		sharp = true;
+        }
+        else
+        	sharp = false;
     }
     public String toString() //used for purpose of testing
     {
@@ -237,5 +259,9 @@ public class Model implements NotesAndKeys
     public String[] getSpecificArray()
     {
     	return specificNotes;
+    }
+    public boolean getSharp()
+    {
+    	return sharp;
     }
 }

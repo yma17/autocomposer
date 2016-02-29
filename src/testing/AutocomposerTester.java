@@ -4,6 +4,7 @@ package testing;
 import autocomposer.Composition;
 import autocomposer.Model;
 import autocomposer.Note;
+import autocomposer.NoteUtilities;
 import autocomposer.NotesAndKeys;
 
 public class AutocomposerTester implements NotesAndKeys
@@ -11,10 +12,13 @@ public class AutocomposerTester implements NotesAndKeys
 
 	public static void main(String[] args)
 	{
-		Model x = new Model("B","Aeolian",9);
+		
+		Model x = new Model("C","Ionian",9);
 		Composition z = new Composition(x);
-		Note n = new Note(1);
-		int i = z.findMIDIInterval(n, -3);
+		Note n = new Note(11,x);
+		String s = n.getNoteName();
+		System.out.println(s);
+		int i = NoteUtilities.findMIDIInterval(x.getSpecificArray(),n,-5);
 		System.out.println(i);
 		/*
 		Model a = new Model("C","Ionian",9);
@@ -83,6 +87,7 @@ public class AutocomposerTester implements NotesAndKeys
 		String[] arr = x.getSpecificArray();
 		for(int q = 0; q < arr.length; q++)
 			System.out.println(arr[q]);
+		
         
 	}
 }
