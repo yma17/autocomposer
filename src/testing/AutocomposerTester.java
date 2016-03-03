@@ -12,7 +12,25 @@ public class AutocomposerTester implements NotesAndKeys
 
 	public static void main(String[] args)
 	{
+		Model m = new Model("F","Lydian",9);
+		int[] arr = {0,2,1,0,3,2,4,3,2,1,0};
+		Note[] arr2 = NoteUtilities.convertRelativeToNote(arr,m);
+		for(int x = 0; x < arr2.length;x++) {
+			System.out.println(x + " " + arr2[x].getNoteName() + arr2[x].midiValue());
+		}
 		
+		//Note[] arr3 = NoteUtilities.convertRelativeToNote(int[] relativePitches,String mode,String key,Model mod)
+		
+		/*
+		int[] arr = new int[5];
+		arr[0] = 0;
+		for(int x = 1; x < arr.length; x++) {
+			arr[x] = NoteUtilities.findPitchIndex(arr[x-1], -2);
+			System.out.println(arr[x]);
+		}
+		*/
+		
+		/*
 		Model x = new Model("C","Ionian",9);
 		Composition z = new Composition(x);
 		Note n = new Note(11,x);
@@ -20,6 +38,7 @@ public class AutocomposerTester implements NotesAndKeys
 		System.out.println(s);
 		int i = NoteUtilities.findMIDIInterval(x.getSpecificArray(),n,-5);
 		System.out.println(i);
+		*/
 		/*
 		Model a = new Model("C","Ionian",9);
 		Model b = new Model("D","Dorian",9);
@@ -84,9 +103,11 @@ public class AutocomposerTester implements NotesAndKeys
 		
 		*/
 		
+		/*
 		String[] arr = x.getSpecificArray();
 		for(int q = 0; q < arr.length; q++)
 			System.out.println(arr[q]);
+		*/
 		
         
 	}

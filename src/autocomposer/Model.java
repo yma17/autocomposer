@@ -67,6 +67,10 @@ public class Model implements NotesAndKeys
         	if(mode.equals("Ionian") || mode.equals("Lydian"))
         		sharp = true;
         }
+        else if(key.equals("C")) {
+        	if(mode.equals("Lydian"))
+        		sharp = true;
+        }
         else
         	sharp = false;
     }

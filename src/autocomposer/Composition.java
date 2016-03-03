@@ -4,13 +4,14 @@ import java.util.Arrays;
 
 import autocomposer.Model;
 import autocomposer.Note;
-//import java.util.ArrayList;
+import java.util.ArrayList;
 
 //import com.sun.javafx.sg.prism.NGShape.Mode;
 
 public class Composition implements NotesAndKeys
 {
     //counterpoint composed- visually laid out
+	
 	private Note[] cantusFirmus;
     private Note[] counterpoint; //may be written on top or below CF
     public Model model;
@@ -41,25 +42,34 @@ public class Composition implements NotesAndKeys
     public Note[] composeCantusFirmus() //composes the cantus firmus
     {
         Note[] cantusFirmus = new Note[model.getMeasures()];
+        int[] relativePitches = new int[model.getMeasures()]; //rel. pitches in respect to tonic
         
-        //TODO
-        cantusFirmus[0] = new Note(this.findPitch(model.getKey())); //compose first note of the CF (tonic)
-        cantusFirmus[cantusFirmus.length - 1] = cantusFirmus[0]; //compose last note of the CF (tonic)
+        //first note & last note = tonic
+        relativePitches[0] = 0;
+        relativePitches[cantusFirmus.length-1] = 0;
+        
+        //cantusFirmus[0] = new Note(this.findPitch(model.getKey())); //compose first note of the CF (tonic)
+        //cantusFirmus[cantusFirmus.length - 1] = cantusFirmus[0]; //compose last note of the CF (tonic)
         
 		int focalPoint = this.determineFocalPoint();
 		int preFPContourType = this.determinePreFPContour();
-		//int postFPContourType = this.determinePostFPContour();
         
         if(preFPContourType== 1) {
         	int tonicToLowPointInterval = this.determineTonicToLPInterval();
         	int leapToFPInterval = this.determineLeapToFPInterval(model.getMode(), tonicToLowPointInterval);
         	
         	int tonicToFPInterval = leapToFPInterval + tonicToLowPointInterval + 1;
-        	cantusFirmus[focalPoint - 1] = new Note(findPitch(model.getKey()) + findMIDIInterval(cantusFirmus[0],tonicToFPInterval)); //compose focal point
+        	
+        	relativePitches[focalPoint-1] = tonicToFPInterval - 1;
+        	//cantusFirmus[focalPoint - 1] = new Note(findPitch(model.getKey()) + findMIDIInterval(cantusFirmus[0],tonicToFPInterval)); //compose focal point
 
+        	int firstBeginPoint = 2; //note-by-note begins composing here- default: 3rd note
+        	int firstEndPoint = focalPoint - 1; //note-by-note stops composing here- default: location of focal point
+        	
 			int lowPoint = focalPoint - 1;
-        	if(leapToFPInterval == 8 && focalPoint >= 6) { //2-interval leap (1-interval if mode and tonic to low pt interval do not permit)
-        		double x = Math.random();
+			double x = Math.random();
+        	if(leapToFPInterval == 8 && focalPoint >= 6 && x < 0.2) { //special structure
+        		/*
         		if(x < 0.2) { //5th + 4th
         			boolean b = this.checkFifthPlusFourth(model.getMode(), tonicToLowPointInterval);
         			if(b) {
@@ -73,16 +83,22 @@ public class Composition implements NotesAndKeys
         		//}
         		cantusFirmus[lowPoint - 1] = new Note(this.findPitch(model.getKey()) + this.findMIDIInterval(cantusFirmus[0],tonicToLowPointInterval)); //compose low point
         		lowPoint--;
+        		*/
+        		//set firstEndPoint to lowPoint - 1;
         	}
-        	else //single leap
-        		cantusFirmus[lowPoint - 1] = new Note(this.findPitch(model.getKey()) + this.findMIDIInterval(cantusFirmus[0],tonicToLowPointInterval)); //compose low point 	
+        	else {//single leap
+        		relativePitches[lowPoint - 1] = tonicToLowPointInterval + 1;
+        		//cantusFirmus[lowPoint - 1] = new Note(this.findPitch(model.getKey()) + this.findMIDIInterval(cantusFirmus[0],tonicToLowPointInterval)); //compose low point
+        	}
         }
         /*
         else if(preFPContourType == 2) {
         	//TODO
         }
-        else if(preFPContourType == 3) {
+        double x = Math.random();
+        else if(preFPContourType == 3 || x < 0.25) { //special structure- 1,3,4
         	//TODO
+        	//firstBeginPoint = 3;
         }
         */
 
@@ -98,7 +114,9 @@ public class Composition implements NotesAndKeys
         	cantusFirmus[1] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[model.getModeValue() + determineSecondNote(w) - 1] - DIATONIC_INTERVALS[model.getModeValue()]);
         */
         
+        
         //determine pre focal point
+        //TODO
         for(int x = 2; x < focalPoint - 3; x++) {
         	//cantusFirmus[x] = composeNextNote(x, lastInterval, twoIntervalsBefore, lastDirection, twoDirectionsBefore); //TODO
         }
@@ -207,7 +225,7 @@ public class Composition implements NotesAndKeys
     		return false;
     	return true;
     }
-    /*
+    
     public Note[] composeNoteByNote(int notesToBeComposed, Note[] previousNotes, ArrayList<Note> futureNotes) { //composes all notes in an empty section
     	Note[] arr = new Note[notesToBeComposed];
     	
@@ -267,4 +285,5 @@ public class Composition implements NotesAndKeys
         //insert code here
         return topVoice;
     }
+    
 }

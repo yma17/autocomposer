@@ -1,5 +1,7 @@
 package autocomposer;
 
+import java.util.Arrays;
+
 import autocomposer.NoteUtilities;
 
 public class Note implements NotesAndKeys
@@ -9,7 +11,7 @@ public class Note implements NotesAndKeys
 	public int pitch; // 0-11, 0 = C
 	public int octave; // 0-N
 	public String noteName;
-	public Note(int pitch, Model m, int octave) //notes composed in the context of a specific key and mode
+	public Note(int pitch,Model m,int octave) //notes composed in the context of a specific key and mode
 	{
 		this.pitch = pitch;
 		this.octave = octave;
@@ -38,13 +40,35 @@ public class Note implements NotesAndKeys
 	public String determineNoteName(Model m, int pitch) {
 		String name;
 		
+		System.out.println(pitch);
+		
 		//initial note name
 		if(m.getSharp())
 			name = NOTES_SHARPS[pitch];
 		else
 			name = NOTES[pitch];
 		
-
+		boolean found = false;
+		for(int x = 0; x < m.getSpecificArray().length; x++) { //search for note name in specific array
+			if(m.getSpecificArray()[x].equals(name)){
+				found = true;
+				break;
+			}
+		}
+		if(!found) {
+			//simplify specific array
+			String[] simplified = new String[m.getSpecificArray().length];
+			
+			for(int x = 0; x < m.getSpecificArray().length; x++) {
+				simplified[x] = NoteUtilities.simplifyNoteName(m.getSpecificArray()[x]);
+				if(simplified[x].equals(name)) {
+					name = m.getSpecificArray()[x];
+					break;
+				}
+			}
+		}
+		
+        /*
 		if(name.indexOf("flat") < 0 && name.indexOf("sharp") < 0) {
 			for(int x = 0; x < m.getSpecificArray().length; x++) {
 				int i = x;
@@ -70,7 +94,9 @@ public class Note implements NotesAndKeys
 					name = NoteUtilities.convertToEnharmonic(name);
 			}
 			
+			
 		}
+		*/
 			
 		
 		return name;

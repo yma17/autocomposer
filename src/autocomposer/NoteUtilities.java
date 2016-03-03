@@ -154,4 +154,71 @@ public class NoteUtilities implements NotesAndKeys {
     	}
     	return a;
     }
+	
+	public static int findPitchIndex(int lastIndex, int interval) {
+		int relativeIndex = interval + 1;
+		return lastIndex + relativeIndex;
+	}
+	
+	public static Note[] convertRelativeToNote(int[] relativePitches,Model mod) {
+		String mode = mod.getMode();
+		String key = mod.getKey();
+		
+		int[] m;
+		if(mode.equals("Ionian"))
+			m = IONIAN_DIATONIC_INTERVALS;
+		else if(mode.equals("Dorian"))
+			m = DORIAN_DIATONIC_INTERVALS;
+		else if(mode.equals("Phrygian"))
+			m = PHRYGIAN_DIATONIC_INTERVALS;
+		else if(mode.equals("Lydian"))
+			m = LYDIAN_DIATONIC_INTERVALS;
+		else if(mode.equals("Mixolydian"))
+			m = MIXOLYDIAN_DIATONIC_INTERVALS;
+		else //Aeolian
+			m = AEOLIAN_DIATONIC_INTERVALS;
+		
+		Note[] notes = new Note[relativePitches.length];
+		for(int x = 0; x < relativePitches.length; x++) {
+			int octave = 4;
+			if(relativePitches[x] < 0) {
+				relativePitches[x] += 7;
+				octave--;
+			}
+			else if(relativePitches[x] >= 7) {
+				relativePitches[x] -= 7;
+				octave++;
+			}
+		    notes[x] = new Note(m[relativePitches[x]]+findNoteIndex(key),mod,octave);
+		}
+		return notes;
+	}
+	public static String simplifyNoteName(String s) {
+		String returnString = s;
+		
+		//simplify double
+		if(s.indexOf("double") >= 0) {
+			String basicNote = s.substring(0,1);
+			int index = Arrays.binarySearch(BASIC_NOTES,basicNote);
+			if(s.indexOf("-double-sharp") >= 0)
+				returnString = BASIC_NOTES[(index+1)%7];
+			else if(s.indexOf("-double-flat") >= 0) {
+				if(index == 0)
+					index += 7;
+				returnString = BASIC_NOTES[index - 1];
+			}
+		}
+		
+		//simplify enharmonic
+		if(s.equals("B-sharp"))
+			returnString = "C";
+		else if(s.equals("C-flat"))
+			returnString = "B";
+		else if(s.equals("F-flat"))
+			returnString = "E";
+		else if(s.equals("E-sharp"))
+			returnString = "F";
+		
+		return returnString;
+	}
 }

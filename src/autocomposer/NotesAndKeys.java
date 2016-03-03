@@ -7,6 +7,7 @@ public interface NotesAndKeys
     String[] NOTES_SHARPS = {"C","C-sharp","D","D-sharp","E","F","F-sharp","G","G-sharp","A","A-sharp","B"};
     String[] KEYS = {"C","G","D","A","E","B","G-flat","D-flat","A-flat","E-flat","B-flat","F"};
     String[] MODES = {"Aeolian","Ionian","Dorian","Phrygian","Lydian","Mixolydian","Locrian"};
+    int[] PITCH_INDICES = {0,1,2,3,4,5,6};
     int[] COUNTERPOINT_INTERVALS = {0,3,4,7,8,9,12};//intervals expressed in differences in MIDI numbers
     //0=unison, 3=minor 3rd, 4=Major 3rd, 7=Perfect 5th, 8=minor 6th, 9=Major 6th; 12=octave
     int[] IONIAN_DIATONIC_INTERVALS = {0,2,4,5,7,9,11};
