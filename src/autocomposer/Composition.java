@@ -6,8 +6,6 @@ import autocomposer.Model;
 import autocomposer.Note;
 import java.util.ArrayList;
 
-//import com.sun.javafx.sg.prism.NGShape.Mode;
-
 public class Composition implements NotesAndKeys
 {
     //counterpoint composed- visually laid out
@@ -48,99 +46,104 @@ public class Composition implements NotesAndKeys
         relativePitches[0] = 0;
         relativePitches[cantusFirmus.length-1] = 0;
         
-        //cantusFirmus[0] = new Note(this.findPitch(model.getKey())); //compose first note of the CF (tonic)
-        //cantusFirmus[cantusFirmus.length - 1] = cantusFirmus[0]; //compose last note of the CF (tonic)
-        
-		int focalPoint = this.determineFocalPoint();
+		int focalPoint = this.determineFocalPointLocation();
 		int preFPContourType = this.determinePreFPContour();
-        
-        if(preFPContourType== 1) {
+		
+		int firstBeginPoint = 1; //note-by-note begins composing here- always begins at 2nd note
+    	int firstEndPoint; //note-by-note stops composing here
+    	
+        if(preFPContourType== 1) { //tonic to low point, leap to FP
+        	firstEndPoint = focalPoint - 2;
+        	
         	int tonicToLowPointInterval = this.determineTonicToLPInterval();
         	int leapToFPInterval = this.determineLeapToFPInterval(model.getMode(), tonicToLowPointInterval);
         	
         	int tonicToFPInterval = leapToFPInterval + tonicToLowPointInterval + 1;
         	
-        	relativePitches[focalPoint-1] = tonicToFPInterval - 1;
-        	//cantusFirmus[focalPoint - 1] = new Note(findPitch(model.getKey()) + findMIDIInterval(cantusFirmus[0],tonicToFPInterval)); //compose focal point
-
-        	int firstBeginPoint = 2; //note-by-note begins composing here- default: 3rd note
-        	int firstEndPoint = focalPoint - 1; //note-by-note stops composing here- default: location of focal point
-        	
+        	relativePitches[focalPoint-1] = tonicToFPInterval - 1; //compose focal point
+ 
 			int lowPoint = focalPoint - 1;
 			double x = Math.random();
-        	if(leapToFPInterval == 8 && focalPoint >= 6 && x < 0.2) { //special structure
-        		/*
-        		if(x < 0.2) { //5th + 4th
+        	if(leapToFPInterval == 8 && focalPoint >= 6 && x < 0.2) { //special structures
+        		if(x < 0.1) { //5th + 4th
         			boolean b = this.checkFifthPlusFourth(model.getMode(), tonicToLowPointInterval);
         			if(b) {
-        		        cantusFirmus[lowPoint - 2] = new Note(this.findPitch(model.getKey()) + this.findMIDIInterval(cantusFirmus[0],tonicToLowPointInterval)); //compose low point
-        	            cantusFirmus[lowPoint - 1] = new Note(cantusFirmus[focalPoint - 1].getPitch() + 7);
+        				relativePitches[focalPoint - 3] = relativePitches[focalPoint - 1] - 7;
+        				relativePitches[focalPoint - 2] = relativePitches[focalPoint - 1] - 3;
+        				firstEndPoint = focalPoint - 3;
         			}
         		}
-        		//if(x < 0.4) { //additional single note before focal point (include???)
-        			//cantusFirmus[focalPoint - 2] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[tonicToLowPointInterval - 1]); //compose low point
-        			//TODO
-        		//}
-        		cantusFirmus[lowPoint - 1] = new Note(this.findPitch(model.getKey()) + this.findMIDIInterval(cantusFirmus[0],tonicToLowPointInterval)); //compose low point
-        		lowPoint--;
-        		*/
-        		//set firstEndPoint to lowPoint - 1;
+        		else { //additional note before focal point
+        			relativePitches[focalPoint - 2] = relativePitches[focalPoint - 1] - 1;
+        			boolean b = this.checkSixth(NoteUtilities.convertRelativeToNote(relativePitches[focalPoint-2],model).getNoteName());
+        			if(x < 0.15 && b)
+        				relativePitches[focalPoint - 3] = relativePitches[focalPoint - 2] - 5; //asc m6
+        			else
+        				relativePitches[focalPoint - 3] = relativePitches[focalPoint - 2] - 4; //5th
+        			firstEndPoint = focalPoint - 3;
+        		}
         	}
         	else {//single leap
-        		relativePitches[lowPoint - 1] = tonicToLowPointInterval + 1;
-        		//cantusFirmus[lowPoint - 1] = new Note(this.findPitch(model.getKey()) + this.findMIDIInterval(cantusFirmus[0],tonicToLowPointInterval)); //compose low point
+        		relativePitches[lowPoint - 1] = tonicToLowPointInterval + 1; //compose low point
+        	
         	}
         }
-        /*
-        else if(preFPContourType == 2) {
-        	//TODO
+        else if(preFPContourType == 2) { //tonic back to tonic, leap to FP
+        	relativePitches[focalPoint - 2] = 0;
+        	firstEndPoint = focalPoint - 2;
         }
-        double x = Math.random();
-        else if(preFPContourType == 3 || x < 0.25) { //special structure- 1,3,4
-        	//TODO
-        	//firstBeginPoint = 3;
+        else { //preFPContourType == 3, progressive motion to FP throughout
+        	firstEndPoint = focalPoint - 1;
+        	
+        	double x = Math.random();
+        	if(x < 0.25) { //special structure- 1,3,4
+        		relativePitches[1] = 2;
+        		relativePitches[2] = 3;
+        		firstBeginPoint = 3;
+        	}
         }
-        */
-
-        //@SuppressWarnings("unused")
-		//Note[] preFP = this.composePreFP(focalPoint, preFPContourType);
-        
-        //determine 2nd note
-        /*
-        double w = Math.random();
-        if(w < 0.5)
-        	cantusFirmus[1] = new Note(this.findPitch(model.getKey()) + DIATONIC_INTERVALS[model.getModeValue() + determineSecondNote(w) - 1] - DIATONIC_INTERVALS[model.getModeValue()]);
-        else
-        	cantusFirmus[1] = new Note(this.findPitch(model.getKey()) - DIATONIC_INTERVALS[model.getModeValue() + determineSecondNote(w) - 1] - DIATONIC_INTERVALS[model.getModeValue()]);
-        */
-        
+        if(preFPContourType != 1)
+        	relativePitches[focalPoint - 1] = this.determineFocalPoint(preFPContourType);
+        //variables needed for note-to-note
+        int lastPitch = relativePitches[0];
+        int twoPitchesAgo = relativePitches[0]; //for now, will update as index increases
+        int leapsSoFar = 0;
+        int stepsSoFar = 0;
+        int largeLeapsSoFar = 0;
+        int smallerIntervalsSoFar = 0;
+        int notesInSection = firstEndPoint - firstBeginPoint;
         
         //determine pre focal point
-        //TODO
-        for(int x = 2; x < focalPoint - 3; x++) {
-        	//cantusFirmus[x] = composeNextNote(x, lastInterval, twoIntervalsBefore, lastDirection, twoDirectionsBefore); //TODO
+        int[] section = this.composeNoteByNote(notesInSection,lastPitch,twoPitchesAgo,firstEndPoint,leapsSoFar,stepsSoFar,largeLeapsSoFar,smallerIntervalsSoFar);
+        for(int x = firstBeginPoint; x < firstEndPoint; x++) {
+        	relativePitches[x] = section[x - firstBeginPoint];
         }
         
         
         //determine 2nd to last note
         double z = Math.random();
         if(z < 0.5)
-        	cantusFirmus[cantusFirmus.length - 2] = new Note(this.findPitch(model.getKey()) + findMIDIInterval(cantusFirmus[0],2)); //step down
+        	relativePitches[cantusFirmus.length - 2] = 1; //step down
         else
-        	cantusFirmus[cantusFirmus.length - 2] = new Note(this.findPitch(model.getKey()) + findMIDIInterval(cantusFirmus[0],-2)); //step up
-        //@SuppressWarnings("unused")
-		//Note[] postFP = this.composePostFP(model.getMeasures(), focalPoint, postFPContourType);
-        
-        /*
-        for(int x = 0; x < preFP.length; x++)
-        	cantusFirmus[x + 1] = preFP[x];
-        for(int x = postFP.length; x > 0; x--)
-        	cantusFirmus[x - 2] = postFP[x];
-        */
+        	relativePitches[cantusFirmus.length - 2] = -1; //step up
+       
         
         return cantusFirmus;
     }
-    private int determineFocalPoint() //helper method of composeCantusFirmus
+    private int determineFocalPoint(int i) { //if case is not case 1
+    	double x = Math.random();
+    	if(x < 0.25)
+    		return 4;
+    	else if(x < 0.5)
+    		return 5;
+    	else if(x < 0.8) {
+    		if(i == 3)
+    			return 6;
+    	}
+    	//TODO
+    	return 8;
+    }
+    private int determineFocalPointLocation() //helper method of composeCantusFirmus
     {
     	int n = model.getMeasures();
     	double x = Math.random();
@@ -174,7 +177,6 @@ public class Composition implements NotesAndKeys
     	}
     }
     private int determinePreFPContour() { //helper method of composeCantusFirmus. Determines the contour from the first note to the FP.
-    	/*
     	double x = Math.random();
     	if(x < 0.3333)
     		return 1; //Type 1 = go down to low point and leap to focal point
@@ -182,8 +184,6 @@ public class Composition implements NotesAndKeys
     		return 2; //Type 2 = travel, return to tonic and leap to focal point
     	else
     		return 3; //Type 3 = gradual motion upwards towards focal point
-    	*/
-    	return 1;
     }
     private int determineTonicToLPInterval() { //Case I helper method
     	double x = Math.random();
@@ -225,48 +225,192 @@ public class Composition implements NotesAndKeys
     		return false;
     	return true;
     }
-    
-    public Note[] composeNoteByNote(int notesToBeComposed, Note[] previousNotes, ArrayList<Note> futureNotes) { //composes all notes in an empty section
-    	Note[] arr = new Note[notesToBeComposed];
+    private boolean checkSixth(String topNote) {
+    	if(topNote.equals("A") || 
+    			topNote.equals("B") || 
+    			topNote.equals("D") || 
+    			topNote.equals("E")) //cases in which ascending m6 is not acceptable
+    		return false;
+    	return true;
+    }
+    public int[] composeNoteByNote(int notesInSection,int lastPitch,int twoPitchesAgo,int nextPitch,int leapsSoFar,int stepsSoFar,int largeLeapsSoFar,int smallerIntervalsSoFar) { //note-by-note algorithm
+    	ArrayList<CounterpointError> errors = new ArrayList<CounterpointError>();
     	
-    	for(int x = 0; x < arr.length; x++) {
-    		//special structures here
+    	int[] arr = new int[notesInSection];
+    	int notesToBeComposed = notesInSection;
+    	boolean skipRest = false;
+    	boolean recomposing = false;
+    	int recomposingIndex = 0;
+    	int toEndInterval = nextPitch - lastPitch;
+    	for(int x = 0; x < notesInSection; x++) {
+    		//special structures
+    		boolean up;
+			if(x == 0)
+				up = (nextPitch > lastPitch);
+			else
+				up = (nextPitch > arr[x-1]);
+			
     		double y = Math.random();
-    		if(y < 0.1) {
-    			//composeConsecutiveSteps;
+    		double z = Math.random();
+    		int length; //between 4 and 6
+    		if(y < 0.1) { //consecutive steps
+    			if(notesToBeComposed == 4)
+    				length = 4;
+    			else if(notesToBeComposed == 5)
+    				length = (int)(z*2)+4;
+    			else //notesToBeComposed >= 6
+    				length = (int)(z*3)+4;
+    			
+    			boolean valid;
+    			if(up)
+    				valid = this.checkNoteValidity(arr[x-1]+length,arr[x-1]+(length-1),arr[x-1]+(length-2),nextPitch,-1,-1,-1,-1,notesToBeComposed-length); //-1 = do not consider these parameters
+    			else
+    				valid = this.checkNoteValidity(arr[x-1]-length,arr[x-1]+(-length+1),arr[x-1]+(-length+2),nextPitch,-1,-1,-1,-1,notesToBeComposed-length); //-1 = do not consider these parameters
+    			
+    			if(valid) {
+    				for(int a = 0; a < length; a++) {
+    					if(up)
+    						arr[x+a] = arr[x-1]+(x+1);
+    					else
+    						arr[x+a] = arr[x-1]-(x+1);
+    				}
+    			}
     		}
-    		else if(y < 0.2) {
-    			//composeTriad;
-            }
+    		else if(x < 0.2) { //triad
+    			int[] triadIntervals;
+    			String position;
+    			double b = Math.random();
+    			if(b < 0.5) {
+    				triadIntervals = ROOT_POSITION_TRIAD_INTERVALS;
+    				position = "root position";
+    			}
+    			else if(b < 0.75) {
+    				triadIntervals = FIRST_INVERSION_TRIAD_INTERVALS;
+    				position = "first inversion";
+    			}
+    			else {
+    				triadIntervals = SECOND_INVERSION_TRIAD_INTERVALS;
+    				position = "second inversion";
+    			}
+    			
+    			int next;
+    			int after;
+    			if(up) {
+    			    next = arr[x-1] + triadIntervals[1]; 
+    			    after = arr[x-1] + triadIntervals[2];
+    			}
+    			else {
+    				if(position.equals("root position"))
+    				    next = arr[x-1] - triadIntervals[1]; 
+    				else
+    					next = arr[x-1] - (5- triadIntervals[1]);
+    				after = arr[x-1] - triadIntervals[2];
+    			}
+    			
+    			
+    		}
     		
-    		//main note-to-note algorithm
-    		Note nextNote = decideNextNote(previousNotes, futureNotes);
-            arr[x] = nextNote;
+    		int nextNote = this.decideNextNote(lastPitch,twoPitchesAgo,nextPitch,leapsSoFar,stepsSoFar,largeLeapsSoFar,smallerIntervalsSoFar,notesToBeComposed);
+    		if(nextNote == -1) { //no valid notes available
+    			//store error
+    			if(!recomposing)
+    			    errors.add(new CounterpointError(arr[x-1]));
+    			errors.get(recomposingIndex).addToError(arr[x-1]);
+    			
+    			arr[x-1] = 0;
+    			x--; //go back
+    		}
+    		notesToBeComposed--;
+    		toEndInterval = nextPitch - arr[x];
     	}
     	return arr;
     }
-    
-    private Note decideNextNote(Note[] previousNotes, ArrayList<Note> futureNotes) {
-    	return new Note[0];
-    }
-    */
-    //TODO
-    /*
-    private Note[] composePreFP(int focalPoint, int contourType) {
-    	Note[] preFP = new Note[focalPoint - 3];
+    private int decideNextNote(int lastPitch,int twoPitchesAgo,int nextPitch,int leapsSoFar,int stepsSoFar,int largeLeapsSoFar,int smallerIntervalsSoFar,int notesToBeComposed) {
+    	ArrayList<Integer> range = this.listRange(lastPitch);
+    	ArrayList<Integer> validRange = this.listValidRange(range, lastPitch, twoPitchesAgo, nextPitch, leapsSoFar, stepsSoFar, largeLeapsSoFar, smallerIntervalsSoFar,notesToBeComposed);
     	
+    	if(validRange.size() == 0) {
+    		return -1;
+    	}
+    	int index = (int) Math.random() * validRange.size();
+    	int proposedNote = validRange.get(index);
+    	return proposedNote;
+    	
+    }
+    private ArrayList<Integer> listRange(int lastPitch) {
+    	ArrayList<Integer> range = new ArrayList<Integer>();
+    	for(int x = 2; x <= 5; x++) {
+    		range.add(lastPitch+x); //above
+    		range.add(lastPitch-x); //below
+    	}
+    	return range;
+    }
+    private ArrayList<Integer> listValidRange(ArrayList<Integer> range, int lastPitch,int twoPitchesAgo,int nextPitch,int leapsSoFar,int stepsSoFar,int largeLeapsSoFar,int smallerIntervalsSoFar,int notesToBeComposed) {
+    	ArrayList<Integer> validRange = new ArrayList<Integer>();
+    	for(int x = 0; x < range.size(); x++) {
+    		boolean valid = this.checkNoteValidity(range.get(x),lastPitch,twoPitchesAgo,nextPitch,leapsSoFar,stepsSoFar,largeLeapsSoFar,smallerIntervalsSoFar,notesToBeComposed);
+    		if(valid)
+    			validRange.add(range.get(x));
+    	}
+    	return validRange;
+    }
+    private boolean checkNoteValidity(int pitch,int lastPitch,int twoPitchesAgo,int nextPitch,int leapsSoFar,int stepsSoFar,int largeLeapsSoFar,int smallerIntervalsSoFar,int notesToBeComposed) {
+    	int thisInterval = pitch - lastPitch; //1= 2nd
+    	int lastInterval = pitch - twoPitchesAgo;
+    	int nextInterval = nextPitch - pitch;
+    	
+    	//no tri-tones
+    	if(thisInterval == 4) {
+    		if(model.getMode().equals("Ionian")) {
+    			if((pitch == -1 && lastPitch == 3) || (pitch == 3 && lastPitch == -1))
+    				return false;
+    		}
+    		else if(model.getMode().equals("Dorian")) {
+    			if((pitch == -2 && lastPitch == 2) || (pitch == 2 && lastPitch == -2))
+    				return false;
+    		}
+    		else if(model.getMode().equals("Phrygian")) {
+    			if((pitch == -3 && lastPitch == 1) || (pitch == 1 && lastPitch == -3))
+    				return false;
+    		}
+    		else if(model.getMode().equals("Lydian")) {
+    			if((pitch == -4 && lastPitch == 0) || (pitch == 0 && lastPitch == -4)
+    					|| (pitch == 3 && lastPitch == 7) || (pitch == 7 && lastPitch == 3))
+    				return false;
+    		}
+    		else if(model.getMode().equals("Mixolydian")) {
+    			if((pitch == -5 && lastPitch == -1) || (pitch == -1 && lastPitch == -5)
+    					|| (pitch == 2 && lastPitch == -2) || (pitch == -2 && lastPitch == 2))
+    				return false;
+    		}
+    		else if(model.getMode().equals("Aeolian")) {
+    			if((pitch == -6 && lastPitch == -2) || (pitch == -2 && lastPitch == -6)
+    					|| (pitch == 1 && lastPitch == -3) || (pitch == -3 && lastPitch == 1))
+    				return false;
+    		}
+    	}
+    	
+    	//step-leap ratio
+    	if(stepsSoFar != -1 && leapsSoFar != -1) {
+    		if(!(stepsSoFar/leapsSoFar <= 1.5) || !(stepsSoFar/leapsSoFar >= 0.8))
+    			return false;
+    	}
+    	
+    	//large leap (4+)- smaller interval ratio (3-)
+    	if(largeLeapsSoFar != -1 && smallerIntervalsSoFar != -1) {
+    		if(!(largeLeapsSoFar/smallerIntervalsSoFar <= 0.25))
+    			return false;
+    	}
+    	
+    	//no leaps larger than 5th aside from leap to FP
+    	if(thisInterval >= 5)
+    		return false;
+    	}
     	
     	//TODO
-    	return new Note[0]; //so that it compiles
-    }
-    private Note[] composePostFP(int measures, int focalPoint, int contourType) {
-    	Note postFP = new Note[measures - focalPoint - 2];
+    	return true;
     	
-    	//TODO
-    	return new Note[0]; //so that it compiles
     }
-    */
-    
     private Note[] composeCounterpoint(boolean istopLineCF) {
     	if(istopLineCF)
     		return composeBottomVoice();
@@ -285,5 +429,4 @@ public class Composition implements NotesAndKeys
         //insert code here
         return topVoice;
     }
-    
 }

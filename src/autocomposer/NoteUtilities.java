@@ -160,9 +160,11 @@ public class NoteUtilities implements NotesAndKeys {
 		return lastIndex + relativeIndex;
 	}
 	
-	public static Note[] convertRelativeToNote(int[] relativePitches,Model mod) {
+	public static Note convertRelativeToNote(int relativePitch,Model mod) {
 		String mode = mod.getMode();
 		String key = mod.getKey();
+		
+		Note returnNote;
 		
 		int[] m;
 		if(mode.equals("Ionian"))
@@ -178,20 +180,19 @@ public class NoteUtilities implements NotesAndKeys {
 		else //Aeolian
 			m = AEOLIAN_DIATONIC_INTERVALS;
 		
-		Note[] notes = new Note[relativePitches.length];
-		for(int x = 0; x < relativePitches.length; x++) {
-			int octave = 4;
-			if(relativePitches[x] < 0) {
-				relativePitches[x] += 7;
-				octave--;
-			}
-			else if(relativePitches[x] >= 7) {
-				relativePitches[x] -= 7;
-				octave++;
-			}
-		    notes[x] = new Note(m[relativePitches[x]]+findNoteIndex(key),mod,octave);
+		int octave = 4;
+		if(relativePitch < 0) {
+			relativePitch += 7;
+			octave--;
 		}
-		return notes;
+		else if(relativePitch >= 7) {
+			relativePitch -= 7;
+			octave++;
+		}
+		
+		returnNote = new Note(m[relativePitch]+findNoteIndex(key),mod,octave);
+		
+		return returnNote;
 	}
 	public static String simplifyNoteName(String s) {
 		String returnString = s;

@@ -12,9 +12,12 @@ public class AutocomposerTester implements NotesAndKeys
 
 	public static void main(String[] args)
 	{
-		Model m = new Model("F","Lydian",9);
-		int[] arr = {0,2,1,0,3,2,4,3,2,1,0};
-		Note[] arr2 = NoteUtilities.convertRelativeToNote(arr,m);
+		Model m = new Model("D","Mixolydian",9);
+		int[] arr = {0,-2,-1,-2,-4,3,2,0,1,0};
+		Note[] arr2 = new Note[arr.length];
+		for(int x = 0; x < arr2.length; x++) {
+			arr2[x] = NoteUtilities.convertRelativeToNote(arr[x],m);
+		}
 		for(int x = 0; x < arr2.length;x++) {
 			System.out.println(x + " " + arr2[x].getNoteName() + arr2[x].midiValue());
 		}
