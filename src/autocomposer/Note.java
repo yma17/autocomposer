@@ -40,7 +40,7 @@ public class Note implements NotesAndKeys
 	public String determineNoteName(Model m, int pitch) {
 		String name;
 		
-		System.out.println(pitch);
+		//System.out.println(pitch); //for testing purposes
 		
 		//initial note name
 		if(m.getSharp())

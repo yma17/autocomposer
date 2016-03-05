@@ -73,7 +73,7 @@ public class Composition implements NotesAndKeys
         				firstEndPoint = focalPoint - 3;
         			}
         		}
-        		else { //additional note before focal point
+        		else if(this.checkAdditionalNote(relativePitches[focalPoint-1])){ //additional note before focal point
         			relativePitches[focalPoint - 2] = relativePitches[focalPoint - 1] - 1;
         			boolean b = this.checkSixth(NoteUtilities.convertRelativeToNote(relativePitches[focalPoint-2],model).getNoteName());
         			if(x < 0.15 && b)
@@ -82,28 +82,33 @@ public class Composition implements NotesAndKeys
         				relativePitches[focalPoint - 3] = relativePitches[focalPoint - 2] - 4; //5th
         			firstEndPoint = focalPoint - 3;
         		}
+        		else
+        			relativePitches[lowPoint - 1] = tonicToLowPointInterval + 1; //compose low point
         	}
         	else {//single leap
         		relativePitches[lowPoint - 1] = tonicToLowPointInterval + 1; //compose low point
         	
         	}
         }
-        else if(preFPContourType == 2) { //tonic back to tonic, leap to FP
-        	relativePitches[focalPoint - 2] = 0;
-        	firstEndPoint = focalPoint - 2;
+        else { //precontour = 2 or 3
+        	boolean focalPointCanBeFour = true;
+        	if(preFPContourType == 2) { //tonic back to tonic, leap to FP
+            	relativePitches[focalPoint - 2] = 0;
+            	firstEndPoint = focalPoint - 2;
+            }
+            else { //preFPContourType == 3, progressive motion to FP throughout
+            	firstEndPoint = focalPoint - 1;
+            	
+            	double x = Math.random();
+            	if(x < 0.25) { //special structure- 1,3,4
+            		relativePitches[1] = 2;
+            		relativePitches[2] = 3;
+            		firstBeginPoint = 3;
+            		focalPointCanBeFour = false;
+            	}
+            }
+        	relativePitches[focalPoint - 1] = this.determineFocalPoint(preFPContourType,focalPointCanBeFour)-1;
         }
-        else { //preFPContourType == 3, progressive motion to FP throughout
-        	firstEndPoint = focalPoint - 1;
-        	
-        	double x = Math.random();
-        	if(x < 0.25) { //special structure- 1,3,4
-        		relativePitches[1] = 2;
-        		relativePitches[2] = 3;
-        		firstBeginPoint = 3;
-        	}
-        }
-        if(preFPContourType != 1)
-        	relativePitches[focalPoint - 1] = this.determineFocalPoint(preFPContourType);
         //variables needed for note-to-note
         int lastPitch = relativePitches[0];
         int twoPitchesAgo = relativePitches[0]; //for now, will update as index increases
@@ -114,35 +119,44 @@ public class Composition implements NotesAndKeys
         int smallerIntervalsSoFar = 0;
         int notesInSection = firstEndPoint - firstBeginPoint;
         
+        /*
         //determine pre focal point
         int[] section = this.composeNoteByNote(notesInSection,lastPitch,twoPitchesAgo,threePitchesAgo,firstEndPoint,leapsSoFar,stepsSoFar,largeLeapsSoFar,smallerIntervalsSoFar);
         for(int x = firstBeginPoint; x < firstEndPoint; x++) {
         	relativePitches[x] = section[x - firstBeginPoint];
         }
         
-        
+        */
         //determine 2nd to last note
         double z = Math.random();
         if(z < 0.5)
         	relativePitches[cantusFirmus.length - 2] = 1; //step down
         else
         	relativePitches[cantusFirmus.length - 2] = -1; //step up
+        /*
+        for(int x = 0; x < relativePitches.length; x++) {
+        	cantusFirmus[x] = NoteUtilities.convertRelativeToNote(relativePitches[x], model);
+        }
+        */
+        
+        //used for testing
+        for(int x = 0; x < relativePitches.length; x++) {
+        	System.out.println(relativePitches[x]);
+        }
        
         
         return cantusFirmus;
     }
-    private int determineFocalPoint(int i) { //if case is not case 1
+    private int determineFocalPoint(int i, boolean canBeFour) { //if case is not case 1
     	double x = Math.random();
-    	if(x < 0.25)
+    	if(x < 0.35 && canBeFour)
     		return 4;
-    	else if(x < 0.5)
-    		return 5;
-    	else if(x < 0.8) {
+    	else if(x < 0.65) {
     		if(i == 3)
     			return 6;
     	}
-    	//TODO
-    	return 8;
+    	return 5;
+    	//can't return 8 anymore- wanders too far away
     }
     private int determineFocalPointLocation() //helper method of composeCantusFirmus
     {
@@ -223,6 +237,11 @@ public class Composition implements NotesAndKeys
     			(mode.equals("Phrygian") && tonicToLPInterval == 4) ||
     			(mode.equals("Lydian") && tonicToLPInterval == 5) ||
     			(mode.equals("Ionian") && tonicToLPInterval == 2)) //cases in which 5th+4th is not acceptable
+    		return false;
+    	return true;
+    }
+    private boolean checkAdditionalNote(int interval) {
+    	if(interval >= 4)
     		return false;
     	return true;
     }
@@ -477,4 +496,5 @@ public class Composition implements NotesAndKeys
         //insert code here
         return topVoice;
     }
+    
 }

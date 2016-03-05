@@ -103,12 +103,14 @@ public class NoteUtilities implements NotesAndKeys {
     	lastNoteName = NoteUtilities.simplifyEnharmonic(lastNoteName);
     	thisNoteName = NoteUtilities.simplifyEnharmonic(thisNoteName);
 
+    	/*
     	System.out.println(x);
     	System.out.println(z);
     	System.out.println(cycle);
     	System.out.println(bottomToTop);
     	System.out.println(lastNoteName);
     	System.out.println(thisNoteName);
+    	*/
     	
     	//check octaves
     	if(cycle) {
