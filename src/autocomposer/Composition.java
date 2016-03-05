@@ -107,6 +107,7 @@ public class Composition implements NotesAndKeys
         //variables needed for note-to-note
         int lastPitch = relativePitches[0];
         int twoPitchesAgo = relativePitches[0]; //for now, will update as index increases
+        int threePitchesAgo = relativePitches[0];
         int leapsSoFar = 0;
         int stepsSoFar = 0;
         int largeLeapsSoFar = 0;
@@ -114,7 +115,7 @@ public class Composition implements NotesAndKeys
         int notesInSection = firstEndPoint - firstBeginPoint;
         
         //determine pre focal point
-        int[] section = this.composeNoteByNote(notesInSection,lastPitch,twoPitchesAgo,firstEndPoint,leapsSoFar,stepsSoFar,largeLeapsSoFar,smallerIntervalsSoFar);
+        int[] section = this.composeNoteByNote(notesInSection,lastPitch,twoPitchesAgo,threePitchesAgo,firstEndPoint,leapsSoFar,stepsSoFar,largeLeapsSoFar,smallerIntervalsSoFar);
         for(int x = firstBeginPoint; x < firstEndPoint; x++) {
         	relativePitches[x] = section[x - firstBeginPoint];
         }
@@ -233,7 +234,7 @@ public class Composition implements NotesAndKeys
     		return false;
     	return true;
     }
-    public int[] composeNoteByNote(int notesInSection,int lastPitch,int twoPitchesAgo,int nextPitch,int leapsSoFar,int stepsSoFar,int largeLeapsSoFar,int smallerIntervalsSoFar) { //note-by-note algorithm
+    public int[] composeNoteByNote(int notesInSection,int lastPitch,int twoPitchesAgo,int threePitchesAgo,int nextPitch,int leapsSoFar,int stepsSoFar,int largeLeapsSoFar,int smallerIntervalsSoFar) { //note-by-note algorithm
     	ArrayList<CounterpointError> errors = new ArrayList<CounterpointError>();
     	
     	int[] arr = new int[notesInSection];
@@ -242,6 +243,8 @@ public class Composition implements NotesAndKeys
     	boolean recomposing = false;
     	int recomposingIndex = 0;
     	int toEndInterval = nextPitch - lastPitch;
+    	int twoAgo = twoPitchesAgo;
+    	int threeAgo = threePitchesAgo;
     	for(int x = 0; x < notesInSection; x++) {
     		//special structures
     		boolean up;
@@ -263,9 +266,9 @@ public class Composition implements NotesAndKeys
     			
     			boolean valid;
     			if(up)
-    				valid = this.checkNoteValidity(arr[x-1]+length,arr[x-1]+(length-1),arr[x-1]+(length-2),nextPitch,-1,-1,-1,-1,notesToBeComposed-length); //-1 = do not consider these parameters
+    				valid = this.checkNoteValidity(arr[x-1]+length,arr[x-1]+(length-1),arr[x-1]+(length-2),arr[x-1]+(length-3),nextPitch,-1,-1,-1,-1,notesToBeComposed-length); //-1 = do not consider these parameters
     			else
-    				valid = this.checkNoteValidity(arr[x-1]-length,arr[x-1]+(-length+1),arr[x-1]+(-length+2),nextPitch,-1,-1,-1,-1,notesToBeComposed-length); //-1 = do not consider these parameters
+    				valid = this.checkNoteValidity(arr[x-1]-length,arr[x-1]+(-length+1),arr[x-1]+(-length+2),arr[x-1]+(length-3),nextPitch,-1,-1,-1,-1,notesToBeComposed-length); //-1 = do not consider these parameters
     			
     			if(valid) {
     				for(int a = 0; a < length; a++) {
@@ -276,7 +279,7 @@ public class Composition implements NotesAndKeys
     				}
     			}
     		}
-    		else if(x < 0.2) { //triad
+    		else if(y < 0.2) { //triad
     			int[] triadIntervals;
     			String position;
     			double b = Math.random();
@@ -310,24 +313,28 @@ public class Composition implements NotesAndKeys
     			
     		}
     		
-    		int nextNote = this.decideNextNote(lastPitch,twoPitchesAgo,nextPitch,leapsSoFar,stepsSoFar,largeLeapsSoFar,smallerIntervalsSoFar,notesToBeComposed);
+    		int nextNote = this.decideNextNote(lastPitch,twoPitchesAgo,threePitchesAgo,nextPitch,leapsSoFar,stepsSoFar,largeLeapsSoFar,smallerIntervalsSoFar,notesToBeComposed);
     		if(nextNote == -1) { //no valid notes available
     			//store error
-    			if(!recomposing)
+    			if(recomposing)
     			    errors.add(new CounterpointError(arr[x-1]));
     			errors.get(recomposingIndex).addToError(arr[x-1]);
     			
     			arr[x-1] = 0;
+    			notesToBeComposed++;
+    			toEndInterval = lastPitch - arr[x];
     			x--; //go back
     		}
-    		notesToBeComposed--;
-    		toEndInterval = nextPitch - arr[x];
+    		else {
+    			notesToBeComposed--;
+    			toEndInterval = nextPitch - arr[x];
+    		}
     	}
     	return arr;
     }
-    private int decideNextNote(int lastPitch,int twoPitchesAgo,int nextPitch,int leapsSoFar,int stepsSoFar,int largeLeapsSoFar,int smallerIntervalsSoFar,int notesToBeComposed) {
+    private int decideNextNote(int lastPitch,int twoPitchesAgo,int threePitchesAgo,int nextPitch,int leapsSoFar,int stepsSoFar,int largeLeapsSoFar,int smallerIntervalsSoFar,int notesToBeComposed) {
     	ArrayList<Integer> range = this.listRange(lastPitch);
-    	ArrayList<Integer> validRange = this.listValidRange(range, lastPitch, twoPitchesAgo, nextPitch, leapsSoFar, stepsSoFar, largeLeapsSoFar, smallerIntervalsSoFar,notesToBeComposed);
+    	ArrayList<Integer> validRange = this.listValidRange(range, lastPitch, twoPitchesAgo, threePitchesAgo, nextPitch, leapsSoFar, stepsSoFar, largeLeapsSoFar, smallerIntervalsSoFar,notesToBeComposed);
     	
     	if(validRange.size() == 0) {
     		return -1;
@@ -345,18 +352,19 @@ public class Composition implements NotesAndKeys
     	}
     	return range;
     }
-    private ArrayList<Integer> listValidRange(ArrayList<Integer> range, int lastPitch,int twoPitchesAgo,int nextPitch,int leapsSoFar,int stepsSoFar,int largeLeapsSoFar,int smallerIntervalsSoFar,int notesToBeComposed) {
+    private ArrayList<Integer> listValidRange(ArrayList<Integer> range, int lastPitch,int twoPitchesAgo,int threePitchesAgo,int nextPitch,int leapsSoFar,int stepsSoFar,int largeLeapsSoFar,int smallerIntervalsSoFar,int notesToBeComposed) {
     	ArrayList<Integer> validRange = new ArrayList<Integer>();
     	for(int x = 0; x < range.size(); x++) {
-    		boolean valid = this.checkNoteValidity(range.get(x),lastPitch,twoPitchesAgo,nextPitch,leapsSoFar,stepsSoFar,largeLeapsSoFar,smallerIntervalsSoFar,notesToBeComposed);
+    		boolean valid = this.checkNoteValidity(range.get(x),lastPitch,twoPitchesAgo,threePitchesAgo,nextPitch,leapsSoFar,stepsSoFar,largeLeapsSoFar,smallerIntervalsSoFar,notesToBeComposed);
     		if(valid)
     			validRange.add(range.get(x));
     	}
     	return validRange;
     }
-    private boolean checkNoteValidity(int pitch,int lastPitch,int twoPitchesAgo,int nextPitch,int leapsSoFar,int stepsSoFar,int largeLeapsSoFar,int smallerIntervalsSoFar,int notesToBeComposed) {
+    private boolean checkNoteValidity(int pitch,int lastPitch,int twoPitchesAgo,int threePitchesAgo,int nextPitch,int leapsSoFar,int stepsSoFar,int largeLeapsSoFar,int smallerIntervalsSoFar,int notesToBeComposed) {
     	int thisInterval = pitch - lastPitch; //1= 2nd
-    	int lastInterval = pitch - twoPitchesAgo;
+    	int lastInterval = lastPitch - twoPitchesAgo;
+    	int twoIntervalsAgo = twoPitchesAgo = threePitchesAgo;
     	int nextInterval = nextPitch - pitch;
     	
     	//no tri-tones
@@ -392,22 +400,62 @@ public class Composition implements NotesAndKeys
     	
     	//step-leap ratio
     	if(stepsSoFar != -1 && leapsSoFar != -1) {
-    		if(!(stepsSoFar/leapsSoFar <= 1.5) || !(stepsSoFar/leapsSoFar >= 0.8))
+    		double ratio1 = (double) stepsSoFar/leapsSoFar;
+    		if(!(ratio1 <= 1.5) || !(ratio1 >= 0.8))
     			return false;
     	}
     	
     	//large leap (4+)- smaller interval ratio (3-)
     	if(largeLeapsSoFar != -1 && smallerIntervalsSoFar != -1) {
-    		if(!(largeLeapsSoFar/smallerIntervalsSoFar <= 0.25))
+    		double ratio2 = (double) largeLeapsSoFar/smallerIntervalsSoFar;
+    		if(!(ratio2 <= 0.25))
     			return false;
     	}
     	
     	//no leaps larger than 5th aside from leap to FP
     	if(thisInterval >= 5)
     		return false;
+    	
+    	//is a leap followed/preceded by motion in opposite direction? - any intervals above 5th must have both
+    	if(Math.abs(thisInterval) > 1) { //leap
+    		if(notesToBeComposed == 1) { //last note of section to be composed?
+    			if(thisInterval > 0) { //up
+    				if(!(lastInterval < 0 || nextInterval < 0)) //if either are opposite direction
+    					return false;
+    			}
+    			else { //down
+    				if(!(lastInterval > 0 || nextInterval > 0))
+    					return false;
+    			}
+    		}
+    		
+    		boolean aboveFifth = (Math.abs(lastInterval) >= 5);
+    		if(aboveFifth) {
+    			if(lastInterval < 0 && (thisInterval < 0))
+    				return false;
+    			else if(lastInterval > 0 && (thisInterval > 0))
+    				return false;
+    		}
+    		
+    		if(thisInterval > 0) { //up
+    			if(lastInterval > 1) { //if last interval is also up and is leap
+    				if(twoIntervalsAgo > 0) //if interval before that is also up
+    					return false;
+    			}
+    		}
+    		else { //thisInterval < 0 = down
+    			if(lastInterval < -1) { //if last interval is also down and is leap
+    				if(twoIntervalsAgo < 0) //if interval before that is also down
+    					return false;
+    			}
+    		}
     	}
     	
-    	//TODO
+    	//interval-notes to definition ratio
+    	double ratio3 = (double) nextInterval/notesToBeComposed;
+    	if(ratio3 > 2.0)
+    		return false; //can't wander too far away
+    	
     	return true;
     	
     }
