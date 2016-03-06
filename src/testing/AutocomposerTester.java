@@ -15,7 +15,7 @@ public class AutocomposerTester implements NotesAndKeys
 		Model m = new Model("C","Ionian",10);
 		Composition c = new Composition(m);
 		Note[] notes = c.composeCantusFirmus();
-		/*
+		
 		for(int x = 0; x < notes.length; x++) {
 			System.out.println(notes[x].midiValue());
 		}
