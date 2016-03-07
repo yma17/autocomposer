@@ -51,6 +51,10 @@ public class Composition implements NotesAndKeys
 		int focalPoint = this.determineFocalPointLocation();
 		int preFPContourType = this.determinePreFPContour();
 		
+		//for testing
+		System.out.println(preFPContourType);
+		System.out.println();
+		
 		int firstBeginPoint = 1; //note-by-note begins composing here- always begins at 2nd note
     	int firstEndPoint; //note-by-note stops composing here
     	
@@ -122,6 +126,7 @@ public class Composition implements NotesAndKeys
             	}
             }
         	relativePitches[focalPoint - 1] = this.determineFocalPoint(preFPContourType,focalPointCanBeFour)-1;
+        	info.setMaxPitch(relativePitches[focalPoint - 1]);
         }
         
         int notesInSection = firstEndPoint - firstBeginPoint;
@@ -133,6 +138,13 @@ public class Composition implements NotesAndKeys
         	relativePitches[x] = section[x - firstBeginPoint];
         }
         
+        int notesInSection2 = (cantusFirmus.length - 2) - focalPoint;
+        
+        //determine post focal point
+        int[] section2 = this.composeNoteByNote(notesInSection2,relativePitches[focalPoint - 1],relativePitches[focalPoint - 2],relativePitches[focalPoint - 3],relativePitches[cantusFirmus.length - 2]);
+        for(int x = focalPoint; x < cantusFirmus.length - 2; x++) {
+        	relativePitches[x] = section2[x - focalPoint];
+        }
         
         //determine 2nd to last note
         double z = Math.random();
@@ -157,7 +169,7 @@ public class Composition implements NotesAndKeys
     private int determineFocalPoint(int i, boolean canBeFour) { //if case is not case 1
     	double x = Math.random();
     	if(x < 0.35 && canBeFour)
-    		return 4;
+    		return 4; ///4th
     	else if(x < 0.65) {
     		if(i == 3)
     			return 6;
@@ -271,9 +283,18 @@ public class Composition implements NotesAndKeys
     	int last = lastPitch;
     	int twoAgo = twoPitchesAgo;
     	int threeAgo = threePitchesAgo;
+    	
+    	//for testing
+    	int iterations = 0;
+    	
     	for(int x = 0; x < notesInSection; x++) {
-    		boolean skipRest = false;
+    		//used for testing
+    		if(iterations > 20)
+    			break;
     		
+    		boolean skipRest = false;
+    		System.out.println(x);
+    		/*
     		//special structures
     		boolean up;
 			if(x == 0)
@@ -282,9 +303,10 @@ public class Composition implements NotesAndKeys
 				up = (nextPitch > arr[x-1]);
 			
     		double y = Math.random();
+    		System.out.println(y);
     		double z = Math.random();
     		int length; //between 4 and 6
-    		if(y < 0.1) { //consecutive steps
+    		if(y < 0.1 && notesToBeComposed >= 4) { //consecutive steps
     			if(notesToBeComposed == 4)
     				length = 4;
     			else if(notesToBeComposed == 5)
@@ -315,6 +337,7 @@ public class Composition implements NotesAndKeys
     					else {
     						arr[x+a] = arr[x-1]-(x+1);
     						notesToBeComposed--;
+    					}
     				}
     				skipRest = true;
     				x += length;
@@ -357,27 +380,43 @@ public class Composition implements NotesAndKeys
         				after = lastPitch - triadIntervals[2];
         			}
     			}
+    			else {
+    				if(up) {
+        			    next = arr[x-1] + triadIntervals[1]; 
+        			    after = arr[x-1] + triadIntervals[2];
+        			}
+        			else {
+        				if(position.equals("root position"))
+        				    next = arr[x-1] - triadIntervals[1]; 
+        				else
+        					next = arr[x-1] - (5- triadIntervals[1]);
+        				after = arr[x-1] - triadIntervals[2];
+        			}
+    			}
+    			
+    			//temporary, in order for checkNoteValidity to work
+    			notesToBeComposed -= 2;
+				info.incrementLeapsSoFar(2);
+				if(triadIntervals[2] == 5) {
+					info.incrementLargeLeapsSoFar(1);
+					info.incrementSmallerIntervalsSoFar(1);
+				}
+				else {
+					info.incrementSmallerIntervalsSoFar(2);
+				}
     			
     			boolean triadIsValid;
     			if(x == 0)
-    				triadIsValid = this.checkNoteValidity(after, next, lastPitch, twoPitchesAgo, nextPitch, notesToBeComposed,false);
+    				triadIsValid = (this.checkNoteValidity(after, next, lastPitch, twoPitchesAgo, nextPitch, notesToBeComposed,false) && this.checkTriadValidity(lastPitch,next,after,position));
     			else if(x == 1)
-    				triadIsValid = this.checkNoteValidity(after, next, arr[0], lastPitch, nextPitch, notesToBeComposed,false);
+    				triadIsValid = (this.checkNoteValidity(after, next, arr[0], lastPitch, nextPitch, notesToBeComposed,false) && this.checkTriadValidity(arr[x-1],next,after,position));
     			else
-    				triadIsValid = this.checkNoteValidity(after, next, arr[x-1], arr[x-2], nextPitch, notesToBeComposed,false);
+    				triadIsValid = (this.checkNoteValidity(after, next, arr[x-1], arr[x-2], nextPitch, notesToBeComposed,false) && this.checkTriadValidity(arr[x-1],next,after,position));
+    			
     			
     			if(triadIsValid) {
     				arr[x] = next;
     				arr[x+1] = after;
-    				notesToBeComposed -= 2;
-    				info.incrementLeapsSoFar(2);
-    				if(triadIntervals[2] == 5) {
-    					info.incrementLargeLeapsSoFar(1);
-    					info.incrementSmallerIntervalsSoFar(1);
-    				}
-    				else {
-    					info.incrementSmallerIntervalsSoFar(2);
-    				}
     				last = arr[x-1];
     				twoAgo = arr[x];
     				if(x == 0)
@@ -385,33 +424,51 @@ public class Composition implements NotesAndKeys
     				else
     					threeAgo = arr[x-1];
     				skipRest = true;
-    				x += 2;
+    				x++;
+    			}
+    			else { //reverse
+        			notesToBeComposed += 2;
+    				info.incrementLeapsSoFar(-2);
+    				if(triadIntervals[2] == 5) {
+    					info.incrementLargeLeapsSoFar(-1);
+    					info.incrementSmallerIntervalsSoFar(-1);
+    				}
+    				else {
+    					info.incrementSmallerIntervalsSoFar(-2);
+    				}
     			}
     		}
+    		*/
     		if(!skipRest) {
-    			int nextNote = this.decideNextNote(lastPitch,twoPitchesAgo,threePitchesAgo,nextPitch,notesToBeComposed);
-        		if(nextNote == -1 && x >= 1) { //no valid notes available
+    			int nextNote = this.decideNextNote(last,twoAgo,threeAgo,nextPitch,notesToBeComposed);
+        		if(nextNote == 100 && x >= 1) { //no valid notes available
         			//store error
         			if(!recomposing) {
-        			    errors.add(new CounterpointError(arr[x-1]));
+        			    errors.add(new CounterpointError(arr[x-1],x));
         			    recomposing = true;
         			}
         			else
         			    errors.get(recomposingIndex).addToError(arr[x-1]);
         			
-        			arr[x-1] = 0;
+        			arr[x-1] = 0; //uncompose
         			notesToBeComposed++;
-        			toEndInterval = lastPitch - arr[x];
+        			if(x >= 2)
+        				toEndInterval = nextPitch - arr[x-2];
+        			else //x = 1
+        				toEndInterval = nextPitch - lastPitch;
         			x -= 2; //go back
         		}
         		else {
-        			recomposing = false;
-        			int newInt = nextNote - lastPitch;
-        			if(newInt >= 3)
+        			if(recomposing) {
+        				recomposing = false;
+        				recomposingIndex++;
+        			}
+        			int newInt = nextNote - last;
+        			if(Math.abs(newInt) >= 3)
         				info.incrementLargeLeapsSoFar(1);
         			else
         				info.incrementSmallerIntervalsSoFar(1);
-        			if(newInt >= 2)
+        			if(Math.abs(newInt) >= 2)
         				info.incrementLeapsSoFar(1);
         			else
         				info.incrementStepsSoFar(1);
@@ -425,15 +482,46 @@ public class Composition implements NotesAndKeys
         			toEndInterval = nextPitch - arr[x];
         		}
     		}
+    		
+    		//used for testing
+    		iterations++;
+    		
+    		/*
+    		if(notesToBeComposed == 0) { //check final interval
+        		boolean finalCheck = this.checkNoteValidity(nextPitch,arr[arr.length-1],arr[arr.length-2],arr[arr.length-3],100,0,true);
+        		if(!finalCheck) {
+        			errors.add(new CounterpointError(arr[x-1],x+1));
+    			    recomposing = true;
+    			    arr[x] = 0;
+    			    notesToBeComposed++;
+    			    toEndInterval = nextPitch - arr[x-1];
+        			x--;
+        		}
+    		}
+    		*/
+    		
     	}
+    	System.out.println();
     	return arr;
+    }
+    private boolean checkTriadValidity(int first,int second,int third,String position) { //check for tri tones
+    	boolean valid;
+    	if(position.equals("root position")) {
+    		valid = this.checkForTriTones(first,third,4);
+    	}
+    	else if(position.equals("first inversion")) {
+    		valid = this.checkForTriTones(second,third,3);
+    	}
+    	else //position = "second inversion"
+    		valid = this.checkForTriTones(first, second, 3);
+    	return valid;
     }
     private int decideNextNote(int lastPitch,int twoPitchesAgo,int threePitchesAgo,int nextPitch,int notesToBeComposed) {
     	ArrayList<Integer> range = this.listRange(lastPitch);
     	ArrayList<Integer> validRange = this.listValidRange(range, lastPitch, twoPitchesAgo, threePitchesAgo, nextPitch, notesToBeComposed);
     	
     	if(validRange.size() == 0) {
-    		return -1;
+    		return 100;
     	}
     	int index = (int) Math.random() * validRange.size();
     	int proposedNote = validRange.get(index);
@@ -472,64 +560,9 @@ public class Composition implements NotesAndKeys
     	int nextInterval = nextPitch - pitch;
     	
     	//no tri-tones
-    	if(Math.abs(thisInterval) == 4) {
-    		if(model.getMode().equals("Ionian")) {
-    			if((pitch == -1 && lastPitch == 3) || (pitch == 3 && lastPitch == -1))
-    				return false;
-    		}
-    		else if(model.getMode().equals("Dorian")) {
-    			if((pitch == -2 && lastPitch == 2) || (pitch == 2 && lastPitch == -2))
-    				return false;
-    		}
-    		else if(model.getMode().equals("Phrygian")) {
-    			if((pitch == -3 && lastPitch == 1) || (pitch == 1 && lastPitch == -3))
-    				return false;
-    		}
-    		else if(model.getMode().equals("Lydian")) {
-    			if((pitch == -4 && lastPitch == 0) || (pitch == 0 && lastPitch == -4)
-    					|| (pitch == 3 && lastPitch == 7) || (pitch == 7 && lastPitch == 3))
-    				return false;
-    		}
-    		else if(model.getMode().equals("Mixolydian")) {
-    			if((pitch == -5 && lastPitch == -1) || (pitch == -1 && lastPitch == -5)
-    					|| (pitch == 2 && lastPitch == -2) || (pitch == -2 && lastPitch == 2))
-    				return false;
-    		}
-    		else if(model.getMode().equals("Aeolian")) {
-    			if((pitch == -6 && lastPitch == -2) || (pitch == -2 && lastPitch == -6)
-    					|| (pitch == 1 && lastPitch == -3) || (pitch == -3 && lastPitch == 1))
-    				return false;
-    		}
-    	}
-    	else if(Math.abs(thisInterval) == 3) {
-    		if(model.getMode().equals("Ionian")) {
-    			if((pitch == 3 && lastPitch == 6) || (pitch == 6 && lastPitch == 6)
-    					|| (pitch == -4 && lastPitch == -1) || (pitch == -1 && lastPitch == -4))
-    				return false;
-    		}
-    		else if(model.getMode().equals("Dorian")) {
-    			if((pitch == 2 && lastPitch == 5) || (pitch == 5 && lastPitch == 2)
-    					|| (pitch == -5 && lastPitch == -2) || (pitch == -2 && lastPitch == -5))
-    				return false;
-    		}
-    		else if(model.getMode().equals("Phrygian")) {
-    			if((pitch == 1 && lastPitch == 4) || (pitch == 4 && lastPitch == 1)
-    					|| (pitch == -6 && lastPitch == -3) || (pitch == -3 && lastPitch == -6))
-    				return false;
-    		}
-    		else if(model.getMode().equals("Lydian")) {
-    			if((pitch == 0 && lastPitch == 3) || (pitch == 3 && lastPitch == 0))
-    				return false;
-    		}
-    		else if(model.getMode().equals("Mixolydian")) {
-    			if((pitch == -1 && lastPitch == 2) || (pitch == 2 && lastPitch == -1))
-    				return false;
-    		}
-    		else if(model.getMode().equals("Aeolian")) {
-    			if((pitch == -2 && lastPitch == 1) || (pitch == 1 && lastPitch == -2))
-    				return false;
-    		}
-    	}
+    	boolean triTones = this.checkForTriTones(lastPitch,pitch,thisInterval);
+    	if(triTones)
+    		return false;
     	
     	//step-leap ratio
     	if(considerIntervals && info.getLeapsSoFar() != 0) {
@@ -544,10 +577,6 @@ public class Composition implements NotesAndKeys
     		if(!(ratio2 <= 0.25))
     			return false;
     	}
-    	
-    	//no leaps larger than 5th aside from leap to FP
-    	if(Math.abs(thisInterval) >= 5)
-    		return false;
     	
     	//is a leap followed/preceded by motion in opposite direction? - any intervals above 5th must have both
     	if(Math.abs(thisInterval) > 1 && lastInterval != 100) { //leap
@@ -586,10 +615,12 @@ public class Composition implements NotesAndKeys
     		}
     	}
     	
-    	//interval-notes to definition ratio
-    	double ratio3 = (double) Math.abs(nextInterval/notesToBeComposed);
-    	if(ratio3 > 2.0)
-    		return false; //can't wander too far away
+    	//interval-notes to distance ratio
+    	if(notesToBeComposed != 0) {
+    		double ratio3 = (double) Math.abs(nextInterval/notesToBeComposed);
+        	if(ratio3 > 2.0)
+        		return false; //can't wander too far away
+    	}
     	
     	//can't reach predetermined max and min pitches
     	if(pitch >= info.getMaxPitch())
@@ -599,6 +630,67 @@ public class Composition implements NotesAndKeys
     	
     	return true;
     	
+    }
+    private boolean checkForTriTones(int firstPitch, int secondPitch, int interval) {
+    	if(interval == 4) {
+    		if(model.getMode().equals("Ionian")) {
+    			if((secondPitch == -1 && firstPitch == 3) || (secondPitch == 3 && firstPitch == -1))
+    				return true;
+    		}
+    		else if(model.getMode().equals("Dorian")) {
+    			if((secondPitch == -2 && firstPitch == 2) || (secondPitch == 2 && firstPitch == -2))
+    				return true;
+    		}
+    		else if(model.getMode().equals("Phrygian")) {
+    			if((secondPitch == -3 && firstPitch == 1) || (secondPitch == 1 && firstPitch == -3))
+    				return true;
+    		}
+    		else if(model.getMode().equals("Lydian")) {
+    			if((secondPitch == -4 && firstPitch == 0) || (secondPitch == 0 && firstPitch == -4)
+    					|| (secondPitch == 3 && firstPitch == 7) || (secondPitch == 7 && firstPitch == 3))
+    				return true;
+    		}
+    		else if(model.getMode().equals("Mixolydian")) {
+    			if((secondPitch == -5 && firstPitch == -1) || (secondPitch == -1 && firstPitch == -5)
+    					|| (secondPitch == 2 && firstPitch == -2) || (secondPitch == -2 && firstPitch == 2))
+    				return true;
+    		}
+    		else if(model.getMode().equals("Aeolian")) {
+    			if((secondPitch == -6 && firstPitch == -2) || (secondPitch == -2 && firstPitch == -6)
+    					|| (secondPitch == 1 && firstPitch == -3) || (secondPitch == -3 && firstPitch == 1))
+    				return true;
+    		}
+    	}
+    	else if(interval == 3) {
+    		if(model.getMode().equals("Ionian")) {
+    			if((secondPitch == 3 && firstPitch == 6) || (secondPitch == 6 && firstPitch == 6)
+    					|| (secondPitch == -4 && firstPitch == -1) || (secondPitch == -1 && firstPitch == -4))
+    				return true;
+    		}
+    		else if(model.getMode().equals("Dorian")) {
+    			if((secondPitch == 2 && firstPitch == 5) || (secondPitch == 5 && firstPitch == 2)
+    					|| (secondPitch == -5 && firstPitch == -2) || (secondPitch == -2 && firstPitch == -5))
+    				return true;
+    		}
+    		else if(model.getMode().equals("Phrygian")) {
+    			if((secondPitch == 1 && firstPitch == 4) || (secondPitch == 4 && firstPitch == 1)
+    					|| (secondPitch == -6 && firstPitch == -3) || (secondPitch == -3 && firstPitch == -6))
+    				return true;
+    		}
+    		else if(model.getMode().equals("Lydian")) {
+    			if((secondPitch == 0 && firstPitch == 3) || (secondPitch == 3 && firstPitch == 0))
+    				return true;
+    		}
+    		else if(model.getMode().equals("Mixolydian")) {
+    			if((secondPitch == -1 && firstPitch == 2) || (secondPitch == 2 && firstPitch == -1))
+    				return true;
+    		}
+    		else if(model.getMode().equals("Aeolian")) {
+    			if((secondPitch == -2 && firstPitch == 1) || (secondPitch == 1 && firstPitch == -2))
+    				return true;
+    		}
+    	}
+    	return false;
     }
     private Note[] composeCounterpoint(boolean istopLineCF) {
     	if(istopLineCF)

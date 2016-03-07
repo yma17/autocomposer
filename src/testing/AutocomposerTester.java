@@ -12,7 +12,7 @@ public class AutocomposerTester implements NotesAndKeys
 
 	public static void main(String[] args)
 	{
-		Model m = new Model("C","Ionian",10);
+		Model m = new Model("D","Dorian",10);
 		Composition c = new Composition(m);
 		Note[] notes = c.composeCantusFirmus();
 		
