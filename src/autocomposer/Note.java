@@ -43,7 +43,7 @@ public class Note implements NotesAndKeys
 		//System.out.println(pitch); //for testing purposes
 		
 		//initial note name
-		if(m.getSharp())
+		if(m.getKeyIsSharp())
 			name = NOTES_SHARPS[pitch];
 		else
 			name = NOTES[pitch];

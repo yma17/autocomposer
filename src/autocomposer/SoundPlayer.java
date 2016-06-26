@@ -9,6 +9,7 @@ import javax.sound.midi.MidiChannel;
 
 
 public class SoundPlayer {
+	/*
 	public static int MidiChannelNumber = 0; // Piano
 	public static int DefaultMidiVelocity = 80;
 	
@@ -36,7 +37,7 @@ public class SoundPlayer {
 	}
 	
 	public void play(Note note) {
-		int n = note.midiValue();
+		//int n = note.midiValue();
 		this.channel.noteOn(n, DefaultMidiVelocity);
 		try {
 			Thread.sleep(Duration);
@@ -48,7 +49,7 @@ public class SoundPlayer {
 	
 	public void play(Note[] notes) {
 		for( Note note : notes ){
-			this.play(note);
+			//this.play(note);
 		}
 	}
 	
@@ -68,4 +69,5 @@ public class SoundPlayer {
 		}
 			
 	}
+	*/
 }

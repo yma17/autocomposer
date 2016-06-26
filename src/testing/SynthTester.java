@@ -11,10 +11,10 @@ public class SynthTester {
 		int[] diatonicPitches = {0, 2, 4, 5, 7, 9, 11};
 		Note[] notes = new Note[diatonicPitches.length]; 
 		for(int i = 0; i < diatonicPitches.length; ++i){
-			notes[i] = new Note(diatonicPitches[i]);
+			//notes[i] = new Note(diatonicPitches[i]);
 		}
 		
-		player.play(notes);
+		//player.play(notes);
 	}
 
 }

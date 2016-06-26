@@ -23,10 +23,10 @@ public class Composition implements NotesAndKeys
     {
         Note[][] composition = new Note[2][model.getMeasures()];
     	cantusFirmus = composeCantusFirmus();
-        counterpoint = composeCounterpoint(model.getCF());
+        counterpoint = composeCounterpoint(model.getTopLineIsCF());
         for(int x = 0; x < model.getMeasures(); x++)
         {
-            if(model.getCF())
+            if(model.getTopLineIsCF())
             {
                 composition[0][x] = cantusFirmus[x];
                 composition[1][x] = counterpoint[x];
@@ -102,7 +102,7 @@ public class Composition implements NotesAndKeys
         	
         	}
         }
-        else { //precontour = 2 or 3
+        else { //precontour = types 2 or 3
         	boolean focalPointCanBeFour = true;
         	if(preFPContourType == 2) { //tonic back to tonic, leap to FP
             	relativePitches[focalPoint - 2] = 0;
@@ -112,7 +112,7 @@ public class Composition implements NotesAndKeys
             	firstEndPoint = focalPoint - 1;
             	
             	double x = Math.random();
-            	if(x < 0.25) { //special structure- 1,3,4
+            	if(x < 0.25) { //special structure- 1,3,4, first three notes
             		relativePitches[1] = 2;
             		relativePitches[2] = 3;
             		firstBeginPoint = 3;
@@ -132,20 +132,21 @@ public class Composition implements NotesAndKeys
         int notesInSection = firstEndPoint - firstBeginPoint;
         
         
-        //determine pre focal point
-        int[] section = this.composeNoteByNote(notesInSection,lastPitch,twoPitchesAgo,threePitchesAgo,relativePitches[firstEndPoint]);
+        //compose pre focal point
+        int[] section = this.composeNoteByNote(notesInSection,lastPitch,twoPitchesAgo,threePitchesAgo,relativePitches[firstEndPoint],true);
         for(int x = firstBeginPoint; x < firstEndPoint; x++) {
         	relativePitches[x] = section[x - firstBeginPoint];
         }
         
-        int notesInSection2 = (cantusFirmus.length - 2) - focalPoint;
+        int notesInSection2 = (cantusFirmus.length - 1) - focalPoint;
         
-        //determine post focal point
-        int[] section2 = this.composeNoteByNote(notesInSection2,relativePitches[focalPoint - 1],relativePitches[focalPoint - 2],relativePitches[focalPoint - 3],relativePitches[cantusFirmus.length - 2]);
-        for(int x = focalPoint; x < cantusFirmus.length - 2; x++) {
+        //compose post focal point
+        int[] section2 = this.composeNoteByNote(notesInSection2,relativePitches[focalPoint - 1],relativePitches[focalPoint - 2],relativePitches[focalPoint - 3],relativePitches[cantusFirmus.length - 1],false);
+        for(int x = focalPoint; x < cantusFirmus.length - 1; x++) {
         	relativePitches[x] = section2[x - focalPoint];
         }
         
+        /*
         //determine 2nd to last note
         double z = Math.random();
         if(z < 0.5)
@@ -153,10 +154,12 @@ public class Composition implements NotesAndKeys
         else
         	relativePitches[cantusFirmus.length - 2] = -1; //step up
         /*
+         * 
+         */
         for(int x = 0; x < relativePitches.length; x++) {
         	cantusFirmus[x] = NoteUtilities.convertRelativeToNote(relativePitches[x], model);
         }
-        */
+        
         
         //used for testing
         for(int x = 0; x < relativePitches.length; x++) {
@@ -272,8 +275,17 @@ public class Composition implements NotesAndKeys
     		return false;
     	return true;
     }
-    public int[] composeNoteByNote(int notesInSection,int lastPitch,int twoPitchesAgo,int threePitchesAgo,int nextPitch) { //note-by-note algorithm
+    public int[] composeNoteByNote(int notesInSection,int lastPitch,int twoPitchesAgo,int threePitchesAgo,int nextPitch,boolean preFP) { //note-by-note algorithm
     	ArrayList<CounterpointError> errors = new ArrayList<CounterpointError>();
+    	
+    	//for testing
+    	/*
+    	System.out.println(info.getLargeLeapsSoFar());
+    	System.out.println(info.getLeapsSoFar());
+    	System.out.println(info.getMaxPitch());
+    	System.out.println(info.getSmallerIntervalsSoFar());
+    	System.out.println(info.getStepsSoFar());
+    	*/
     	
     	int[] arr = new int[notesInSection];
     	int notesToBeComposed = notesInSection;
@@ -289,11 +301,16 @@ public class Composition implements NotesAndKeys
     	
     	for(int x = 0; x < notesInSection; x++) {
     		//used for testing
-    		if(iterations > 20)
+    		if(iterations > 12)
     			break;
+    		
+    		boolean secondToLast = false;
+    		if(!preFP && notesToBeComposed == 1)
+    			secondToLast = true;
     		
     		boolean skipRest = false;
     		System.out.println(x);
+    		System.out.println();
     		/*
     		//special structures
     		boolean up;
@@ -440,7 +457,7 @@ public class Composition implements NotesAndKeys
     		}
     		*/
     		if(!skipRest) {
-    			int nextNote = this.decideNextNote(last,twoAgo,threeAgo,nextPitch,notesToBeComposed);
+    			int nextNote = this.decideNextNote(last,twoAgo,threeAgo,nextPitch,notesToBeComposed,secondToLast);
         		if(nextNote == 100 && x >= 1) { //no valid notes available
         			//store error
         			if(!recomposing) {
@@ -501,7 +518,20 @@ public class Composition implements NotesAndKeys
     		*/
     		
     	}
+    	
+    	//for testing
     	System.out.println();
+    	
+    	for(int x = 0; x < errors.size(); x++) {
+    		System.out.println(errors.get(x).endIndex);
+    		System.out.println();
+    		for(int y = 0; y < errors.get(x).error.size(); y++) {
+    			System.out.println(errors.get(x).error.get(y));
+    		}
+    	}
+    	
+    	System.out.println();
+    	
     	return arr;
     }
     private boolean checkTriadValidity(int first,int second,int third,String position) { //check for tri tones
@@ -516,9 +546,9 @@ public class Composition implements NotesAndKeys
     		valid = this.checkForTriTones(first, second, 3);
     	return valid;
     }
-    private int decideNextNote(int lastPitch,int twoPitchesAgo,int threePitchesAgo,int nextPitch,int notesToBeComposed) {
+    private int decideNextNote(int lastPitch,int twoPitchesAgo,int threePitchesAgo,int nextPitch,int notesToBeComposed,boolean secondToLast) {
     	ArrayList<Integer> range = this.listRange(lastPitch);
-    	ArrayList<Integer> validRange = this.listValidRange(range, lastPitch, twoPitchesAgo, threePitchesAgo, nextPitch, notesToBeComposed);
+    	ArrayList<Integer> validRange = this.listValidRange(range, lastPitch, twoPitchesAgo, threePitchesAgo, nextPitch, notesToBeComposed,secondToLast);
     	
     	if(validRange.size() == 0) {
     		return 100;
@@ -536,16 +566,16 @@ public class Composition implements NotesAndKeys
     	}
     	return range;
     }
-    private ArrayList<Integer> listValidRange(ArrayList<Integer> range, int lastPitch,int twoPitchesAgo,int threePitchesAgo,int nextPitch,int notesToBeComposed) {
+    private ArrayList<Integer> listValidRange(ArrayList<Integer> range, int lastPitch,int twoPitchesAgo,int threePitchesAgo,int nextPitch,int notesToBeComposed,boolean secondToLast) {
     	ArrayList<Integer> validRange = new ArrayList<Integer>();
     	for(int x = 0; x < range.size(); x++) {
-    		boolean valid = this.checkNoteValidity(range.get(x),lastPitch,twoPitchesAgo,threePitchesAgo,nextPitch,notesToBeComposed,true);
+    		boolean valid = this.checkNoteValidity(range.get(x),lastPitch,twoPitchesAgo,threePitchesAgo,nextPitch,notesToBeComposed,true,secondToLast);
     		if(valid)
     			validRange.add(range.get(x));
     	}
     	return validRange;
     }
-    private boolean checkNoteValidity(int pitch,int lastPitch,int twoPitchesAgo,int threePitchesAgo,int nextPitch,int notesToBeComposed,boolean considerIntervals) {
+    private boolean checkNoteValidity(int pitch,int lastPitch,int twoPitchesAgo,int threePitchesAgo,int nextPitch,int notesToBeComposed,boolean considerIntervals,boolean secondToLast) {
     	int thisInterval = pitch - lastPitch; //1= 2nd
     	int lastInterval;
     	if(twoPitchesAgo != 100)
@@ -558,6 +588,12 @@ public class Composition implements NotesAndKeys
     	else
     		twoIntervalsAgo = 100;
     	int nextInterval = nextPitch - pitch;
+    	
+    	//if second to last note- must be stepwise from tonic
+    	if(secondToLast) {
+    		if(pitch != 1 && pitch != -1)
+    			return false;
+    	}
     	
     	//no tri-tones
     	boolean triTones = this.checkForTriTones(lastPitch,pitch,thisInterval);
@@ -627,6 +663,10 @@ public class Composition implements NotesAndKeys
     		return false;
     	if(pitch <= info.getMinPitch())
     		return false;
+    	
+    	System.out.print(true);
+    	System.out.println(pitch);
+    	System.out.println();
     	
     	return true;
     	

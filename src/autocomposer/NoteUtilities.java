@@ -2,35 +2,35 @@ package autocomposer;
 
 import java.util.Arrays;
 
+/* This class contains methods meant to serve as means of conversion, simplification, and search
+ * for notes and note names in this entire project.
+ */
 public class NoteUtilities implements NotesAndKeys {
 	public NoteUtilities() {
 	}
-	public static String convertToDouble(String note, Model m, boolean sharp) { //precondition- requires to be doubled
-		String output = note;
-		if(sharp)
-			for(int x = 0; x < m.getSpecificArray().length; x++) {
-				String ch = m.getSpecificArray()[x].substring(0,1);
-				if(sharp)
-					output = ch + "-double-sharp";
-				else
-					output = ch + "-double-flat";
-			}
-		return output;
+	public static String convertToDouble(String currentNote, boolean convertUp) {
+		//precondition: if convertUp = true; currentNote is not E or B
+		//precondition: if convertUp = false; currentNote is not F or C
+		String basicNote = currentNote.substring(0,1);
+		int basicNoteIndex = Arrays.binarySearch(BASIC_NOTES, basicNote);
+		if(convertUp) //convert basic note up
+			return BASIC_NOTES[(basicNoteIndex + 1)%7] + "-double-flat";
+		else
+			return BASIC_NOTES[(basicNoteIndex - 1 + 7)%7] + "-double-sharp";
 	}
-	public static String convertOutOfDouble(String note) { //converts a note name out of double accidental form. (e.g. B-double-flat to A.)
-		String str = note.substring(0,1);
-    	String returnString;
-    	if(note.indexOf("sharp")>=0)
-    		returnString = BASIC_NOTES[(Arrays.binarySearch(BASIC_NOTES, str) + 1)%7];
-    	else {
-    		int i = Arrays.binarySearch(BASIC_NOTES, str) - 1;
-    		if(i < 0)
-    			i += 7;
-    		returnString = BASIC_NOTES[i];
-    	}
-    	return returnString;
+	public static String convertOutOfDouble(String currentNote) { //converts a note name out of double accidental form. (e.g. B-double-flat to A.)
+		//precondition: if convertUp = true; currentNote is not E or B
+		//precondition: if convertUp = false; currentNote is not F or C
+		//precondition: note contains "double-sharp" or "double-flat"
+		String basicNote = currentNote.substring(0,1);
+		int basicNoteIndex = Arrays.binarySearch(BASIC_NOTES, basicNote);
+		if(currentNote.indexOf("sharp") >= 0) //convert basic note up
+			return BASIC_NOTES[(basicNoteIndex + 1)%7];
+		else
+			return BASIC_NOTES[(basicNoteIndex - 1 + 7)%7];
 	}
 	public static String convertToEnharmonic(String note) {
+		//precondition: note is C,B,E,F,B-sharp, C-flat,F-flat,E-sharp
 		String returnString = note;
 		if(note.equals("C"))
 			returnString = "B-sharp";
@@ -40,12 +40,7 @@ public class NoteUtilities implements NotesAndKeys {
 			returnString = "F-flat";
 		else if(note.equals("F"))
 			returnString = "E-sharp";
-		
-		return returnString;
-	}
-	public static String simplifyEnharmonic(String note) {
-		String returnString = note;
-		if(note.equals("B-sharp"))
+		else if(note.equals("B-sharp"))
 			returnString = "C";
 		else if(note.equals("C-flat"))
 			returnString = "B";
@@ -64,6 +59,7 @@ public class NoteUtilities implements NotesAndKeys {
     	}
     	return pitch;
 	}
+	//TODO
 	public static int findMIDIInterval(String[] specificArray, Note previous, int interval) {
     	int x = 0;
     	String[] arr = specificArray;
@@ -100,8 +96,8 @@ public class NoteUtilities implements NotesAndKeys {
     	else if(thisNoteName.indexOf("double") >= 0)
     		thisNoteName = NoteUtilities.convertOutOfDouble(thisNoteName);
     	
-    	lastNoteName = NoteUtilities.simplifyEnharmonic(lastNoteName);
-    	thisNoteName = NoteUtilities.simplifyEnharmonic(thisNoteName);
+    	lastNoteName = NoteUtilities.convertToEnharmonic(lastNoteName);
+    	thisNoteName = NoteUtilities.convertToEnharmonic(thisNoteName);
 
     	/*
     	System.out.println(x);
@@ -196,6 +192,7 @@ public class NoteUtilities implements NotesAndKeys {
 		
 		return returnNote;
 	}
+	
 	public static String simplifyNoteName(String s) {
 		String returnString = s;
 		
