@@ -4,107 +4,93 @@ import java.util.Arrays;
 
 import autocomposer.NoteUtilities;
 
+/* A Note object simply serves to represent a note in the music. It contains
+ * intrinsic info about the note (pitch, octave, and note name)
+ */
 public class Note implements NotesAndKeys
 {
-	
-//	public int midiValue;
+    public int midiValue;
 	public int pitch; // 0-11, 0 = C
 	public int octave; // 0-N
 	public String noteName;
-	public Note(int pitch,Model m,int octave) //notes composed in the context of a specific key and mode
-	{
-		this.pitch = pitch;
-		this.octave = octave;
-		while(pitch < 0) {
-			pitch += 12;
-			octave--;
-		}
-		while(pitch >= 12) {
-			pitch -= 12;
-			octave++;
-		}
+	public Note(Model m) { //compose first note of cantus firmus
+		noteName = m.getKey();
 		
-		noteName = this.determineNoteName(m,pitch);
+		pitch = 0;
+		if(m.getKeyIsSharp()) {
+			for(int i = 0; i < NOTES_SHARPS.length; i++) {
+				if(NOTES_SHARPS[i].equals(noteName))
+					pitch = i;
+			}
+		}
+		else {
+			for(int i = 0; i < NOTES.length; i++) {
+				if(NOTES[i].equals(noteName))
+					pitch = i;
+			}
+		}
+
+		octave = m.getOctaveOfCF();
+		midiValue = midiValue();	
 	}
-	
-	public Note(int pitch, Model m) {
-		this(pitch,m, 4); //4 - default octave
+	public Note(Note firstNote,int relativePitch,Model m) {
+		//precondition: first note of CF (relativeNote) created already
+		//creates note by comparing to first note of the line
+		
+		int arrayValue = (relativePitch+28)%7; //value of note in specific array
+		//21 = note won't wander more than four octaves of relativeNote
+		noteName = m.getSpecificArray()[arrayValue];
+		pitch = NoteUtilities.findPitch(m.getSpecificArray()[arrayValue],m.getKeyIsSharp());
+		
+		//adjust octave as necessary
+		octave = firstNote.getOctave();
+		//System.out.println(octave); //for testing
+		int octaveDownPitch = 0;
+	    boolean stop = false;
+	    int i = 6;
+    	//System.out.println("reached"); //for testing
+	    while(!stop) {
+	    	//System.out.println("executing"); //for testing
+	    	octaveDownPitch--;
+	    	int thisPitch = NoteUtilities.findPitch(m.getSpecificArray()[i],m.getKeyIsSharp());
+	    	if(thisPitch >= 10) {
+	    		stop = true;
+	    	}
+	    	i--;
+	    }
+	    
+    	//two exceptions: B key, Ionian and Lydian mode. The 2nd note of the scale
+	    if(m.getKey().equals("B")) {
+	    	if(m.getMode().equals("Ionian") || m.getMode().equals("Lydian")) {
+	   			octaveDownPitch = -6;
+	   			if(arrayValue == 1)
+	   				octave++;
+	    	}
+	    }
+	    
+	    int octaveUpPitch = octaveDownPitch + 7;
+
+	    if(relativePitch <= octaveDownPitch)
+	    	octave--;
+	    else if(relativePitch > octaveUpPitch)
+	    	octave++;
+	    
+	    
+		midiValue = midiValue();		
 	}
-	
 	public int midiValue() {
 		return (12 * this.octave) + this.pitch + 12;
 	}
 	public int getPitch() {
 		return pitch;
 	}
-	public String determineNoteName(Model m, int pitch) {
-		String name;
-		
-		//System.out.println(pitch); //for testing purposes
-		
-		//initial note name
-		if(m.getKeyIsSharp())
-			name = NOTES_SHARPS[pitch];
-		else
-			name = NOTES[pitch];
-		
-		boolean found = false;
-		for(int x = 0; x < m.getSpecificArray().length; x++) { //search for note name in specific array
-			if(m.getSpecificArray()[x].equals(name)){
-				found = true;
-				break;
-			}
-		}
-		if(!found) {
-			//simplify specific array
-			String[] simplified = new String[m.getSpecificArray().length];
-			
-			for(int x = 0; x < m.getSpecificArray().length; x++) {
-				simplified[x] = NoteUtilities.simplifyNoteName(m.getSpecificArray()[x]);
-				if(simplified[x].equals(name)) {
-					name = m.getSpecificArray()[x];
-					break;
-				}
-			}
-		}
-		
-        /*
-		if(name.indexOf("flat") < 0 && name.indexOf("sharp") < 0) {
-			for(int x = 0; x < m.getSpecificArray().length; x++) {
-				int i = x;
-				int a = i - 1;
-				if(a < 0)
-					a += 7;
-				int b = i - 2;
-				if(b < 0)
-					b += 7;
-				//double accidentals
-				if((name.substring(0,1).equals(m.getSpecificArray()[a%7].substring(0,1)) && (m.getSpecificArray()[x].indexOf("flat") >= 0) && (m.getSpecificArray()[b%7].indexOf("flat") >= 0))) {
-					name = NoteUtilities.convertToDouble(name,m,false); //double flat)
-					break;
-				}
-				else if(name.substring(0,1).equals(m.getSpecificArray()[(x+1)%7].substring(0,1)) && m.getSpecificArray()[x].indexOf("sharp") >=0 && m.getSpecificArray()[(x+2)%7].indexOf("sharp") >=0) {
-					name = NoteUtilities.convertToDouble(name,m,true); //double sharp
-				    break;
-				}
-				//enharmonic notes
-				else if(name.substring(0,1).equals(m.getSpecificArray()[a%7].substring(0,1)))
-					name = NoteUtilities.convertToEnharmonic(name);
-				else if(name.substring(0,1).equals(m.getSpecificArray()[(x+1)%7].substring(0,1)))
-					name = NoteUtilities.convertToEnharmonic(name);
-			}
-			
-			
-		}
-		*/
-			
-		
-		return name;
-	}
 	public String getNoteName() {
 		return noteName;
 	}
 	public int getOctave() {
 		return octave;
+	}
+	public String toString() { //for testing
+		return "MidiValue = " + midiValue + " Pitch = " + pitch + " Note name = " + noteName + " Octave = " + octave;
 	}
 }

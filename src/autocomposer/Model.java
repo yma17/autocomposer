@@ -14,7 +14,7 @@ public class Model implements NotesAndKeys
     public boolean topLineIsCF; //whether top line of the counterpoint is cantus firmus(CF)
     public String[] specificNotes; //7 note names specific to the key and mode
     public boolean keyIsSharp; //whether the key contains sharps of flats (true = sharp)
-    
+    public int octaveOfCF; //octave that the first note of the cantus firmus is in
     public int modeValue; //to make DIATONIC_INTERVALS compatible with any mode (Ionian-0, Dorian-1, Phrygian-2, Lydian-3, Mixolydian-4, Aeolian-5)
     public Model() //in absence in user control, generates random key, mode, length, CF
     {
@@ -44,6 +44,7 @@ public class Model implements NotesAndKeys
         
         topLineIsCF = determineTopLineIsCF();
         keyIsSharp = determineSharp(key,mode);
+        octaveOfCF = determineOctaveofCF(key,topLineIsCF,keyIsSharp);
         this.specificNotes = determineSpecificNotes(key,mode,keyIsSharp);
     }
     private String determineKey() //In absence of user control only. For sake of simplicity, each mode will be paired up with one specific key such that there are no accidentals
@@ -107,6 +108,46 @@ public class Model implements NotesAndKeys
         else
         	return false;
     }
+    private int determineOctaveofCF(String key, boolean topLineIsCF, boolean keyIsSharp) {
+    	//for testing purposes, for now, return 4
+    	return 4;
+    	/*
+    	double x = Math.random();
+    	
+    	int keyIndex;
+    	if(keyIsSharp)
+    		keyIndex = Arrays.binarySearch(NOTES_SHARPS, key);
+    	else
+    		keyIndex = Arrays.binarySearch(NOTES,key);
+    	
+    	if(topLineIsCF) { //range: F3-C5
+    		if(keyIndex == 0) { //C
+    			if(x < 0.5)
+    				return 4;
+    			else
+    				return 5;
+    		}
+    		else if(keyIndex >= 1 && keyIndex <= 5) //C-sharp/D-flat to F
+    			return 4;
+    		else { //F-sharp/G-flat to B
+    			if(x < 0.5)
+    				return 3;
+    			else
+    				return 4;
+    		}
+    	}
+    	else { //range: C3-G4
+    		if(keyIndex >= 0 && keyIndex <= 7) { //C to G
+    			if(x < 0.5)
+    				return 3;
+    			else
+    				return 4;
+    		}
+    		else //G-sharp/A-flat to B
+    			return 3;
+    	}
+    	*/
+    }
     public String[] determineSpecificNotes(String key, String mode, boolean sharp)
     {
     	String[] specificNotes = new String[7];
@@ -126,7 +167,10 @@ public class Model implements NotesAndKeys
     					found = true;
     			}
     			if(found) {
-    				specificNotes[i] = NoteUtilities.convertToEnharmonic(specificNotes[i]);
+    				if(specificNotes[i].length() == 1) //simple note, no sharps of flats
+    					specificNotes[i] = NoteUtilities.convertToComplexEnharmonic(specificNotes[i]);
+    				else
+    					specificNotes[i] = NoteUtilities.convertToSimpleEnharmonic(specificNotes[i]);
     			}
     			else {
     				if(sharp)
@@ -233,6 +277,10 @@ public class Model implements NotesAndKeys
     public boolean getKeyIsSharp()
     {
     	return keyIsSharp;
+    }
+    public int getOctaveOfCF()
+    {
+    	return octaveOfCF;
     }
     public int getModeValue()
     {
