@@ -16,6 +16,8 @@ public class Model implements NotesAndKeys
     public boolean keyIsSharp; //whether the key contains sharps of flats (true = sharp)
     public int octaveOfCF; //octave that the first note of the cantus firmus is in
     public int modeValue; //to make DIATONIC_INTERVALS compatible with any mode (Ionian-0, Dorian-1, Phrygian-2, Lydian-3, Mixolydian-4, Aeolian-5)
+    public int octaveUpValue; //how many notes up (relative pitch distance) from the tonic is required to raise the octave
+    public int octaveDownValue; //how many notes down (relative pitch distance) from the tonic is required to lower the octave
     public Model() //in absence in user control, generates random key, mode, length, CF
     {
     	key = determineKey();
@@ -46,6 +48,7 @@ public class Model implements NotesAndKeys
         keyIsSharp = determineSharp(key,mode);
         octaveOfCF = determineOctaveofCF(key,topLineIsCF,keyIsSharp);
         this.specificNotes = determineSpecificNotes(key,mode,keyIsSharp);
+        this.determineOctaveValues();
     }
     private String determineKey() //In absence of user control only. For sake of simplicity, each mode will be paired up with one specific key such that there are no accidentals
     {
@@ -254,6 +257,24 @@ public class Model implements NotesAndKeys
         }
     	return rawScale;
     }
+    public void determineOctaveValues() {
+    	int octaveDownPitch = 0;
+	    boolean stop = false;
+	    int i = 6;
+	    int lastPitch = NoteUtilities.findPitch(this.getKey(), this.getKeyIsSharp());
+	    while(!stop) {
+	    	octaveDownPitch--;
+	    	int thisPitch = NoteUtilities.findPitch(this.getSpecificArray()[i],this.getKeyIsSharp());
+	    	if(thisPitch > lastPitch) {
+	    		stop = true;
+	    	}
+	    	lastPitch = thisPitch;
+	    	i--;
+	    }
+	    int octaveUpPitch = 8 + octaveDownPitch;
+	    this.octaveUpValue = octaveUpPitch;
+	    this.octaveDownValue = octaveDownPitch;
+    }
     public String getKey()
     {
         return key;
@@ -285,6 +306,14 @@ public class Model implements NotesAndKeys
     public int getModeValue()
     {
     	return modeValue;
+    }
+    public int getOctaveUpValue()
+    {
+    	return octaveUpValue;
+    }
+    public int getOctaveDownValue()
+    {
+    	return octaveDownValue;
     }
     public String toString() //used for purpose of testing
     {

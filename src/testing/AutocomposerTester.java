@@ -15,8 +15,8 @@ public class AutocomposerTester implements NotesAndKeys
 	{
 		//testing Note class constructors - works
 		
-		Model m = new Model("G", "Phrygian",10);
-		int[] relPitchArray = {0,2,4,8,10,-8,-6,-4,-2,0};
+		Model m = new Model("G", "Mixolydian",10);
+		int[] relPitchArray = {0,2,3,4,2,0,1,0,-1,0};
 		Note[] noteArray = new Note[10];
 		noteArray[0] = new Note(m);
 		for(int i = 1; i < relPitchArray.length; i++) {

@@ -37,44 +37,31 @@ public class Note implements NotesAndKeys
 		//precondition: first note of CF (relativeNote) created already
 		//creates note by comparing to first note of the line
 		
-		int arrayValue = (relativePitch+28)%7; //value of note in specific array
-		//21 = note won't wander more than four octaves of relativeNote
+		int arrayValue = (relativePitch+56)%7; //value of note in specific array
+		//56 - to cover all octaves used in music
 		noteName = m.getSpecificArray()[arrayValue];
 		pitch = NoteUtilities.findPitch(m.getSpecificArray()[arrayValue],m.getKeyIsSharp());
 		
+		//TODO
 		//adjust octave as necessary
 		octave = firstNote.getOctave();
-		//System.out.println(octave); //for testing
-		int octaveDownPitch = 0;
-	    boolean stop = false;
-	    int i = 6;
-    	//System.out.println("reached"); //for testing
-	    while(!stop) {
-	    	//System.out.println("executing"); //for testing
-	    	octaveDownPitch--;
-	    	int thisPitch = NoteUtilities.findPitch(m.getSpecificArray()[i],m.getKeyIsSharp());
-	    	if(thisPitch >= 10) {
-	    		stop = true;
+		
+		int octaveRelPitchDistance = 0; //distance of octaves in relative pitches. Will increase by 7.
+	    if(relativePitch <= m.getOctaveDownValue()) {
+	    	while(m.getOctaveDownValue() - relativePitch + octaveRelPitchDistance >= 7) {
+	    		octaveRelPitchDistance -= 7;
+	    		octave--;
 	    	}
-	    	i--;
-	    }
-	    
-    	//two exceptions: B key, Ionian and Lydian mode. The 2nd note of the scale
-	    if(m.getKey().equals("B")) {
-	    	if(m.getMode().equals("Ionian") || m.getMode().equals("Lydian")) {
-	   			octaveDownPitch = -6;
-	   			if(arrayValue == 1)
-	   				octave++;
-	    	}
-	    }
-	    
-	    int octaveUpPitch = octaveDownPitch + 7;
-
-	    if(relativePitch <= octaveDownPitch)
 	    	octave--;
-	    else if(relativePitch > octaveUpPitch)
+		    octaveRelPitchDistance = 0;
+	    }
+	    else if(relativePitch >= m.getOctaveUpValue()) {
+	    	while(relativePitch - m.getOctaveUpValue() - octaveRelPitchDistance >= 7) {
+	    		octaveRelPitchDistance += 7;
+	    		octave++;
+	    	}
 	    	octave++;
-	    
+	    }
 	    
 		midiValue = midiValue();		
 	}
