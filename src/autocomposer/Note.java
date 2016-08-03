@@ -13,6 +13,7 @@ public class Note implements NotesAndKeys
 	public int pitch; // 0-11, 0 = C
 	public int octave; // 0-N
 	public String noteName;
+	public int relativePitch; //all notes a part of a piece of counterpoint; relativePitch = pitch in relation to that of tonic of CF
 	public Note(Model m) { //compose first note of cantus firmus
 		noteName = m.getKey();
 		
@@ -32,6 +33,7 @@ public class Note implements NotesAndKeys
 
 		octave = m.getOctaveOfCF();
 		midiValue = midiValue();	
+		relativePitch = 0;
 	}
 	public Note(Note firstNote,int relativePitch,Model m) {
 		//precondition: first note of CF (relativeNote) created already
@@ -42,7 +44,6 @@ public class Note implements NotesAndKeys
 		noteName = m.getSpecificArray()[arrayValue];
 		pitch = NoteUtilities.findPitch(m.getSpecificArray()[arrayValue],m.getKeyIsSharp());
 		
-		//TODO
 		//adjust octave as necessary
 		octave = firstNote.getOctave();
 		
@@ -64,6 +65,7 @@ public class Note implements NotesAndKeys
 	    }
 	    
 		midiValue = midiValue();		
+		this.relativePitch = relativePitch;
 	}
 	public int midiValue() {
 		return (12 * this.octave) + this.pitch + 12;
@@ -76,6 +78,9 @@ public class Note implements NotesAndKeys
 	}
 	public int getOctave() {
 		return octave;
+	}
+	public int getRelativePitch() {
+		return relativePitch;
 	}
 	public String toString() { //for testing
 		return "MidiValue = " + midiValue + " Pitch = " + pitch + " Note name = " + noteName + " Octave = " + octave;

@@ -15,7 +15,8 @@ public class AutocomposerTester implements NotesAndKeys
 	{
 		Model m = new Model("G", "Mixolydian",10);
 		Composition c = new Composition(m);
-		System.out.println(c.checkSixth("G-double-flat", "D-flat"));
+		System.out.println(c.checkFifthPlusFourth(mode, tonicToLPInterval));
+		
 		//testing Note class constructors - works
 		/*
 		Model m = new Model("G", "Mixolydian",10);
