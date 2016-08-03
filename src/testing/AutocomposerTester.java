@@ -13,8 +13,11 @@ public class AutocomposerTester implements NotesAndKeys
 
 	public static void main(String[] args)
 	{
+		Model m = new Model("G", "Mixolydian",10);
+		Composition c = new Composition(m);
+		System.out.println(c.checkSixth("G-double-flat", "D-flat"));
 		//testing Note class constructors - works
-		
+		/*
 		Model m = new Model("G", "Mixolydian",10);
 		int[] relPitchArray = {0,2,3,4,2,0,1,0,-1,0};
 		Note[] noteArray = new Note[10];
@@ -25,7 +28,7 @@ public class AutocomposerTester implements NotesAndKeys
 		for(int i = 0; i < relPitchArray.length; i++) {
 			System.out.println(noteArray[i].toString());
 		}
-		
+		*/
 			
 		
 		//testing findPitch - works

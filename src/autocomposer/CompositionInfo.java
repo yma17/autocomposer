@@ -1,5 +1,8 @@
 package autocomposer;
 
+/* This class contains information of the structure of the composed work.
+ * It is used extensively during the composition process to decide what to composed next.
+ */
 public class CompositionInfo {
 	private int leapsSoFar;
 	private int stepsSoFar;

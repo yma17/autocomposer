@@ -51,10 +51,6 @@ public class Composition implements NotesAndKeys
 		int focalPoint = this.determineFocalPointLocation();
 		int preFPContourType = this.determinePreFPContour();
 		
-		//for testing
-		System.out.println(preFPContourType);
-		System.out.println();
-		
 		int firstBeginPoint = 1; //note-by-note begins composing here- always begins at 2nd note
     	int firstEndPoint; //note-by-note stops composing here
     	
@@ -83,6 +79,7 @@ public class Composition implements NotesAndKeys
         				relativePitches[focalPoint - 3] = relativePitches[focalPoint - 1] - 7;
         				relativePitches[focalPoint - 2] = relativePitches[focalPoint - 1] - 3;
         				firstEndPoint = focalPoint - 3;
+        	    	    info.setMinPitch(relativePitches[focalPoint-3]);
         			}
         		}
         		else if(this.checkAdditionalNote(relativePitches[focalPoint-1])){ //additional note before focal point
@@ -93,13 +90,16 @@ public class Composition implements NotesAndKeys
         			else
         				relativePitches[focalPoint - 3] = relativePitches[focalPoint - 2] - 4; //5th
         			firstEndPoint = focalPoint - 3;
+            	    info.setMinPitch(relativePitches[focalPoint - 3]);
         		}
-        		else
+        		else {
         			relativePitches[lowPoint - 1] = tonicToLowPointInterval + 1; //compose low point
+            	    info.setMinPitch(relativePitches[lowPoint-1]);
+        		}
         	}
         	else {//single leap
         		relativePitches[lowPoint - 1] = tonicToLowPointInterval + 1; //compose low point
-        	
+        	    info.setMinPitch(relativePitches[lowPoint-1]);
         	}
         }
         else { //precontour = types 2 or 3
@@ -180,7 +180,7 @@ public class Composition implements NotesAndKeys
     	return 5;
     	//can't return 8 anymore- wanders too far away
     }
-    private int determineFocalPointLocation() //helper method of composeCantusFirmus
+    private int determineFocalPointLocation() //helper method of composeCantusFirmus. Determines the index in the CF of the focal point.
     {
     	int n = model.getMeasures();
     	double x = Math.random();
@@ -222,11 +222,11 @@ public class Composition implements NotesAndKeys
     	else
     		return 3; //Type 3 = gradual motion upwards towards focal point
     }
-    private int determineTonicToLPInterval() { //Case I helper method
+    private int determineTonicToLPInterval() { //Case I helper method. Determines the interval between the tonic and low point.
     	double x = Math.random();
     	return (int)(x * 4.0) - 5; //-2 = 2nd, -3 = 3rd, etc. (will return -2-(-5))
     }
-    private int determineLeapToFPInterval(String mode, int tonicToLP) { //Case I helper method
+    private int determineLeapToFPInterval(String mode, int tonicToLP) { //Case I helper method. Determines the interval between the low point and the focal point.
     	double x = Math.random();
     	if(tonicToLP == 2) {
     		if(mode.equals("Lydian")) {
@@ -267,13 +267,23 @@ public class Composition implements NotesAndKeys
     		return false;
     	return true;
     }
-    private boolean checkSixth(String topNote) {
-    	if(topNote.equals("A") || 
-    			topNote.equals("B") || 
-    			topNote.equals("D") || 
-    			topNote.equals("E")) //cases in which ascending m6 is not acceptable
+    public boolean checkSixth(String bottomNote,String topNote) { //helper method of composeCantusFirmus. Checks if an intended 6th leap is an acceptable ascending m6.
+    	//precondition: interval between bottomNote and topNote is a sixth of some kind
+    	int bottomPitch = NoteUtilities.findPitch(bottomNote, model.getKeyIsSharp());
+    	int topPitch = NoteUtilities.findPitch(topNote, model.getKeyIsSharp());
+    	
+    	if(topPitch < bottomPitch)
+    		topPitch += 12;
+    	
+    	//for testing
+    	System.out.println(bottomPitch);
+    	System.out.println(topPitch);
+
+    	
+    	if(topPitch - bottomPitch == 8) //is ascending m6 - 8 pitches away
+    		return true;
+    	else
     		return false;
-    	return true;
     }
     public int[] composeNoteByNote(int notesInSection,int lastPitch,int twoPitchesAgo,int threePitchesAgo,int nextPitch,boolean preFP) { //note-by-note algorithm
     	ArrayList<CounterpointError> errors = new ArrayList<CounterpointError>();
