@@ -13,9 +13,51 @@ public class AutocomposerTester implements NotesAndKeys
 
 	public static void main(String[] args)
 	{
-		Model m = new Model("G", "Mixolydian",10);
+		//testing Case 1 in composeCantusFirmus - works
+		/*
+		Model m = new Model("D","Dorian",10);
 		Composition c = new Composition(m);
-		System.out.println(c.checkFifthPlusFourth(mode, tonicToLPInterval));
+		Note[] cantusFirmus = c.composeCantusFirmus();
+		for(int i = 0; i < cantusFirmus.length; i++) {
+        	if(cantusFirmus[i] != null) {
+        		System.out.println(i + "  " + cantusFirmus[i].toString());
+        	}
+        }
+        */
+		
+		//testing checkTriadValidity - works?
+		/*
+		Model m = new Model("A-flat", "Aeolian",10);
+		Composition c = new Composition(m);
+		Note tonic = new Note(m);
+		Note bottom = new Note(tonic,-1,m);
+		System.out.println(bottom.getNoteName());
+		Note middle = new Note(tonic,1,m);
+		System.out.println(middle.getNoteName());
+		Note top = new Note(tonic,4,m);
+		System.out.println(top.getNoteName());
+		System.out.println(c.checkTriadValidity(bottom,middle,top,"first inversion"));
+		*/
+		
+		//testing determineLeapToAdditionalInterval - works?
+		/*
+		Model m = new Model("B", "Dorian",10);
+		Composition c = new Composition(m);
+		Note tonic = new Note(m);
+		Note lowPoint = new Note(tonic,-4,m);
+		System.out.println(lowPoint.getNoteName());
+		System.out.println(c.determineLeapToAdditionalInterval(tonic,lowPoint));
+		*/
+		
+		//testing determineLeapToFPInterval - works?
+		/*
+		Model m = new Model("D", "Dorian",10);
+		Composition c = new Composition(m);
+		Note tonic = new Note(m);
+		Note lowPoint = new Note(tonic,-1,m);
+		System.out.println(lowPoint.getNoteName());
+		System.out.println(c.determineLeapToFPInterval(tonic,lowPoint));
+		*/
 		
 		//testing Note class constructors - works
 		/*
