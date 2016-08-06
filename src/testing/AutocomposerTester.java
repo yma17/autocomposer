@@ -13,6 +13,15 @@ public class AutocomposerTester implements NotesAndKeys
 
 	public static void main(String[] args)
 	{
+		Model m = new Model("C","Ionian",11);
+		Composition c = new Composition(m);
+		Note[] cantusFirmus = c.composeCantusFirmus();
+		for(int i = 0; i < cantusFirmus.length; i++) {
+        	if(cantusFirmus[i] != null) {
+        		System.out.println(i + "  " + cantusFirmus[i].toString());
+        	}
+        }
+		
 		//testing Case 1 in composeCantusFirmus - works
 		/*
 		Model m = new Model("D","Dorian",10);
