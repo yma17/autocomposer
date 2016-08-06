@@ -13,7 +13,9 @@ public class AutocomposerTester implements NotesAndKeys
 
 	public static void main(String[] args)
 	{
-		Model m = new Model("C","Ionian",11);
+		//testing all cases in composeCantusFirmus - works?
+		
+		Model m = new Model("F","Lydian",13);
 		Composition c = new Composition(m);
 		Note[] cantusFirmus = c.composeCantusFirmus();
 		for(int i = 0; i < cantusFirmus.length; i++) {
@@ -21,6 +23,7 @@ public class AutocomposerTester implements NotesAndKeys
         		System.out.println(i + "  " + cantusFirmus[i].toString());
         	}
         }
+        
 		
 		//testing Case 1 in composeCantusFirmus - works
 		/*
