@@ -16,33 +16,18 @@ public class Composition implements NotesAndKeys
     public CompositionInfo info;
     public Composition(Model m)
     {
+    	cantusFirmus = new Note[m.getMeasures()];
+    	counterpoint = new Note[m.getMeasures()];
         this.model = m;
         info = new CompositionInfo();
     }
-    public Note[][] compose() //composes the 2-voice counterpoint
+    public void compose() //composes the 2-voice counterpoint
     {
-        Note[][] composition = new Note[2][model.getMeasures()];
-    	cantusFirmus = composeCantusFirmus();
-        counterpoint = composeCounterpoint(model.getTopLineIsCF());
-        for(int x = 0; x < model.getMeasures(); x++)
-        {
-            if(model.getTopLineIsCF())
-            {
-                composition[0][x] = cantusFirmus[x];
-                composition[1][x] = counterpoint[x];
-            }
-            else
-            {
-                composition[1][x] = cantusFirmus[x];
-                composition[0][x] = counterpoint[x];
-            }
-        }
-        return composition;
+    	this.composeCantusFirmus();
+    	//this.composeCounterpoint();
     }
-    public Note[] composeCantusFirmus() //composes the cantus firmus
-    {
-        Note[] cantusFirmus = new Note[model.getMeasures()];
-        
+    public void composeCantusFirmus() //composes the cantus firmus
+    {        
         //first note & last note = tonic
         cantusFirmus[0] = new Note(model);
         cantusFirmus[cantusFirmus.length-1] = cantusFirmus[0];
@@ -333,10 +318,6 @@ public class Composition implements NotesAndKeys
         	System.out.println(relativePitches[x]);
         }
         */
-        
-       
-        
-        return cantusFirmus;
     }
     
     
@@ -1058,5 +1039,10 @@ public class Composition implements NotesAndKeys
         //insert code here
         return topVoice;
     }
-    
+    public Note[] getCantusFirmus() {
+    	return cantusFirmus;
+    }
+    public Note[] getCounterpoint() {
+    	return counterpoint;
+    }
 }

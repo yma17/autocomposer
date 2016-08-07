@@ -17,7 +17,8 @@ public class AutocomposerTester implements NotesAndKeys
 		
 		Model m = new Model("F","Lydian",13);
 		Composition c = new Composition(m);
-		Note[] cantusFirmus = c.composeCantusFirmus();
+		c.composeCantusFirmus();
+		Note[] cantusFirmus = c.getCantusFirmus();
 		for(int i = 0; i < cantusFirmus.length; i++) {
         	if(cantusFirmus[i] != null) {
         		System.out.println(i + "  " + cantusFirmus[i].toString());
