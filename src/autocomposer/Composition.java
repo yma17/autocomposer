@@ -49,7 +49,7 @@ public class Composition implements NotesAndKeys
         	
         	firstEndPoint = focalPoint - 2;
         	
-        	int tonicToLowPointInterval = this.determineTonicToLPInterval(cantusFirmus[0]);
+        	int tonicToLowPointInterval = this.determineTonicToLPInterval();
         	Note lowNote = new Note(cantusFirmus[0],tonicToLowPointInterval + 1,model);
 			info.setMinPitch(lowNote.getRelativePitch());
 			
@@ -61,7 +61,7 @@ public class Composition implements NotesAndKeys
 			boolean toRouteTwo = true;
 			
 			if(focalPoint >= 6 && c < 0.15) {
-				int leapToAdditionalInterval = this.determineLeapToAdditionalInterval(cantusFirmus[0],lowNote);
+				int leapToAdditionalInterval = this.determineLeapToAdditionalInterval(lowNote);
 				
 				//if no valid intervals, abandon route 1 and go to route 2
 				boolean continueRouteOne = true;
@@ -86,7 +86,7 @@ public class Composition implements NotesAndKeys
         	
 			//route 2 - no additional note
 			if(toRouteTwo) {
-				int leapToFPInterval = this.determineLeapToFPInterval(cantusFirmus[0], lowNote);
+				int leapToFPInterval = this.determineLeapToFPInterval(lowNote);
 				
 	        	int tonicToFPInterval = leapToFPInterval + tonicToLowPointInterval + 1;
 	        	
@@ -166,7 +166,7 @@ public class Composition implements NotesAndKeys
 			boolean toRouteTwo = true;
 			
 			if(focalPoint >= 6 && c < 0.15) {
-				int leapToAdditionalInterval = this.determineLeapToFPInterval(cantusFirmus[0],1);
+				int leapToAdditionalInterval = this.determineLeapToFPInterval(1);
 				
 				//if no valid intervals, abandon route 1 and go to route 2
 				boolean continueRouteOne = true;
@@ -194,7 +194,7 @@ public class Composition implements NotesAndKeys
         	
 			//route 2 - no additional note
 			if(toRouteTwo) {
-				int leapToFPInterval = this.determineLeapToFPInterval(cantusFirmus[0],2);
+				int leapToFPInterval = this.determineLeapToFPInterval(2);
 				
 	        	Note focal = new Note(cantusFirmus[0],leapToFPInterval-1,model);
 	        	info.setMaxPitch(focal.getRelativePitch());
@@ -248,7 +248,7 @@ public class Composition implements NotesAndKeys
 			}
         }
         else { //precontour = type 3
-        	int tonicToFPInterval = this.determineFocalPoint(cantusFirmus[0]);
+        	int tonicToFPInterval = this.determineFocalPoint();
         	
         	Note focal = new Note(cantusFirmus[0],tonicToFPInterval-1,model);
         	
@@ -370,7 +370,7 @@ public class Composition implements NotesAndKeys
     	else
     		return 3; //Type 3 = gradual motion upwards towards focal point
     }
-    private int determineTonicToLPInterval(Note tonic) { //Case I helper method. Determines the interval between the tonic and low point.
+    private int determineTonicToLPInterval() { //Case I helper method. Determines the interval between the tonic and low point.
     	ArrayList<Integer> validIntervals = new ArrayList<Integer>();
     	
     	//these intervals- valid in all cases
@@ -379,8 +379,8 @@ public class Composition implements NotesAndKeys
     	validIntervals.add(-4);
     	
     	//check for tri tone in 5th interval
-    	Note fifthBelow = new Note(tonic,-4,model);
-    	boolean triTone = this.checkForTriTones(fifthBelow,tonic);
+    	Note fifthBelow = new Note(cantusFirmus[0],-4,model);
+    	boolean triTone = this.checkForTriTones(fifthBelow,cantusFirmus[0]);
     	if(!triTone)
     		validIntervals.add(-5);
     	
@@ -388,17 +388,17 @@ public class Composition implements NotesAndKeys
     	
     	return validIntervals.get(x);
     }
-    public int determineLeapToAdditionalInterval(Note tonic,Note lowPoint) { //Case I helper method, route 1. Determines the interval between the low point and additional note.
+    public int determineLeapToAdditionalInterval(Note lowPoint) { //Case I helper method, route 1. Determines the interval between the low point and additional note.
     	//checks fifth and sixth, the acceptable LP-AN intervals.
     	ArrayList<Integer> validIntervals = new ArrayList<Integer>();
 
     	for(int i = 5; i <= 6; i++) {
-    		Note proposed = new Note(tonic,lowPoint.getRelativePitch()+i-1,model);
+    		Note proposed = new Note(cantusFirmus[0],lowPoint.getRelativePitch()+i-1,model);
 
     		int difference = proposed.midiValue() - lowPoint.midiValue(); //difference in half steps between the two pitches
     		
     		//to avoid tri-tones between tonic and focal point
-    		boolean triTone = this.checkForTriTones(tonic,new Note(tonic,proposed.getRelativePitch()+1,model));
+    		boolean triTone = this.checkForTriTones(cantusFirmus[0],new Note(cantusFirmus[0],proposed.getRelativePitch()+1,model));
     		
     		if(proposed.getRelativePitch() >= 3 && !triTone) { //focal pt must be 4th or above tonic
     			if(difference == 7) //perfect fifth
@@ -415,7 +415,7 @@ public class Composition implements NotesAndKeys
     	
     	return validIntervals.get(x);
     }
-    public int determineLeapToFPInterval(Note tonic,Note lowPoint) { //Case I helper method, route 2. Determines the interval between the low point and the focal point.
+    public int determineLeapToFPInterval(Note lowPoint) { //Case I helper method, route 2. Determines the interval between the low point and the focal point.
     	//precondition: apart from "additional note" method.
     	//lowest acceptable interval = 5th. Largest = 8th. Checks validity of all in between. (except 7th)
     	//conditions: interval between tonic and focal point must be a 4th or greater. No tri-tones.
@@ -424,7 +424,7 @@ public class Composition implements NotesAndKeys
     		if(i != 7) {  
     			boolean valid = true;
     			
-    			Note proposed = new Note(tonic,lowPoint.getRelativePitch()+i-1,model);
+    			Note proposed = new Note(cantusFirmus[0],lowPoint.getRelativePitch()+i-1,model);
     			
     			int difference = proposed.midiValue() - lowPoint.midiValue();
     			
@@ -488,15 +488,15 @@ public class Composition implements NotesAndKeys
     		
         return valid;
     }
-    public int determineLeapToFPInterval(Note tonic,int route) { //helper method for composeCantusFirmus, case 2.
+    public int determineLeapToFPInterval(int route) { //helper method for composeCantusFirmus, case 2.
     	//works with both route 1(additional route), and route 2(other), unlike case 1.
     	//acceptable intervals: third (additional note only), P4, P5, ascending m6.
     	//route 1 = additional note, route 2 = not additional note
     	ArrayList<Integer> validIntervals = new ArrayList<Integer>();
     	for(int i = 3; i <= 6; i++) {
-    		Note proposed = new Note(tonic,i-1,model);
+    		Note proposed = new Note(cantusFirmus[0],i-1,model);
     		
-    		int difference = proposed.midiValue() - tonic.midiValue();
+    		int difference = proposed.midiValue() - cantusFirmus[0].midiValue();
     		
     		if(route == 1) {
     			if((difference == 3) || (difference == 4)) //third
@@ -531,16 +531,16 @@ public class Composition implements NotesAndKeys
     		return false;
     }
     
-    private int determineFocalPoint(Note tonic) { //helper method for composeCantusFirmus, case 3.
+    private int determineFocalPoint() { //helper method for composeCantusFirmus, case 3.
     	//possibilities: perfect 4th, perfect 5th, sixth, minor 7th (if CF is 11 measures or longer), or octave (if CF is 12 measures or longer)
     	//as usual, no tri-tones, Major 7ths
     	//as there is no leap up to FP, leap rules don't apply here
     	ArrayList<Integer> validIntervals = new ArrayList<Integer>();
     	
     	for(int i = 4; i <= 8; i++) {
-    		Note proposed = new Note(tonic,i-1,model);
+    		Note proposed = new Note(cantusFirmus[0],i-1,model);
     		
-    		int difference = proposed.midiValue() - tonic.midiValue();
+    		int difference = proposed.midiValue() - cantusFirmus[0].midiValue();
     		
     		if(difference == 5) //P4
     			validIntervals.add(i);
@@ -1021,23 +1021,19 @@ public class Composition implements NotesAndKeys
     	return false;
     }
     */
-    private Note[] composeCounterpoint(boolean istopLineCF) {
+    private void composeCounterpoint(boolean istopLineCF) {
     	if(istopLineCF)
-    		return composeBottomVoice();
+    		this.composeBottomVoice();
     	else
-    		return composeTopVoice();
+    	    this.composeTopVoice();
     }
-    private Note[] composeBottomVoice() //composes the bottom voice, in case the CF is the top voice
+    private void composeBottomVoice() //composes the bottom voice, in case the CF is the top voice
     {
-        Note[] bottomVoice = new Note[model.getMeasures()];
         //insert code here
-        return bottomVoice;
     }
-    private Note[] composeTopVoice() //composes the top voice, in case the CF is the bottom voice;
+    private void composeTopVoice() //composes the top voice, in case the CF is the bottom voice;
     {
-        Note[] topVoice = new Note[model.getMeasures()];
-        //insert code here
-        return topVoice;
+    	//insert code here
     }
     public Note[] getCantusFirmus() {
     	return cantusFirmus;
