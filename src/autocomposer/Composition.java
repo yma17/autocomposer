@@ -410,23 +410,19 @@ public class Composition implements NotesAndKeys
     public int determineLeapToAdditionalInterval(Note tonic,Note lowPoint) { //Case I helper method, route 1. Determines the interval between the low point and additional note.
     	//checks fifth and sixth, the acceptable LP-AN intervals.
     	ArrayList<Integer> validIntervals = new ArrayList<Integer>();
-    	int lowPointPitch = lowPoint.getPitch();
-    	
+
     	for(int i = 5; i <= 6; i++) {
     		Note proposed = new Note(tonic,lowPoint.getRelativePitch()+i-1,model);
-    		int proposedPitch = proposed.getPitch();
+
+    		int difference = proposed.midiValue() - lowPoint.midiValue(); //difference in half steps between the two pitches
     		
     		//to avoid tri-tones between tonic and focal point
     		boolean triTone = this.checkForTriTones(tonic,new Note(tonic,proposed.getRelativePitch()+1,model));
     		
     		if(proposed.getRelativePitch() >= 3 && !triTone) { //focal pt must be 4th or above tonic
-    		
-    			if(proposedPitch < lowPointPitch)
-    				proposedPitch += 12;
-    		
-    			if(proposedPitch - lowPointPitch == 7) //perfect fifth
+    			if(difference == 7) //perfect fifth
     				validIntervals.add(i);
-    			else if(proposedPitch - lowPointPitch == 8) //ascending m6
+    			else if(difference == 8) //ascending m6
     				validIntervals.add(i);
     		}
     	}
@@ -442,22 +438,19 @@ public class Composition implements NotesAndKeys
     	//precondition: apart from "additional note" method.
     	//lowest acceptable interval = 5th. Largest = 8th. Checks validity of all in between. (except 7th)
     	//conditions: interval between tonic and focal point must be a 4th or greater. No tri-tones.
-    	int lowPointPitch = lowPoint.getPitch();
     	ArrayList<Integer> validIntervals = new ArrayList<Integer>();
     	for(int i = 5; i <= 8; i++) {
     		if(i != 7) {  
     			boolean valid = true;
     			
     			Note proposed = new Note(tonic,lowPoint.getRelativePitch()+i-1,model);
-    			int proposedPitch = proposed.getPitch();
     			
-    			if(proposedPitch < lowPointPitch)
-    				proposedPitch += 12;
+    			int difference = proposed.midiValue() - lowPoint.midiValue();
     			
-    			if(proposedPitch - lowPointPitch == 6) //tri-tone
+    			if(difference == 6) //tri-tone
     				valid = false;
     			
-    			if(proposedPitch - lowPointPitch == 9) //no major 6ths, only ascending m6s allowed
+    			if(difference == 9) //no major 6ths, only ascending m6s allowed
     				valid = false;
     			
     			if(proposed.getRelativePitch() < 3) //less than a 4th
@@ -477,20 +470,16 @@ public class Composition implements NotesAndKeys
     public boolean checkFifthPlusFourth(Note firstNote,Note fifth) { //Case I helper method. Checks validity of special structure 5th + 4th
     	//precondition: interval between FP and LP is an octave, FP already composed, LP determined and to be composed.
     	//also, interval between firstNOte and fifth is a 5th of some kind.
-    	int firstNotePitch = firstNote.getPitch();
-    	int fifthPitch = fifth.getPitch();
-    	
-    	if(fifthPitch < firstNotePitch) {
-    		fifthPitch += 12;
-    	}
+    	int difference = fifth.midiValue() - firstNote.midiValue(); 
     	
     	//to avoid tri-tones between tonic and focal point
-		boolean triTone = this.checkForTriTones(cantusFirmus[0],new Note(cantusFirmus[0],firstNote.getRelativePitch()+7,model));
+    	Note focal = new Note(cantusFirmus[0],firstNote.getRelativePitch()+7,model);
+		boolean triTone = this.checkForTriTones(cantusFirmus[0],focal);
 		
 		if(triTone)
 			return false;
 		
-    	if(fifthPitch - firstNotePitch == 7)
+    	if(difference == 7)
     		return true;
     	else
     		return false;
@@ -499,26 +488,20 @@ public class Composition implements NotesAndKeys
     	//precondition: position consistent with note names of bottom, middle, and top.
     	boolean valid = true;
     	
-    	int bottomPitch = bottom.getPitch();
-    	int middlePitch = middle.getPitch();
-    	int topPitch = top.getPitch();
-    	
-    	if(middlePitch < bottomPitch)
-    		middlePitch += 12;
-    	
-    	if(topPitch < middlePitch)
-    		topPitch += 12;
+    	int bottomMIDIValue = bottom.midiValue();
+    	int middleMIDIValue = middle.midiValue();
+    	int topMIDIValue = top.midiValue();
     	
     	if(position.equals("root position")) {
-    		if(topPitch - bottomPitch == 6)
+    		if(topMIDIValue - bottomMIDIValue == 6)
     			valid = false;
     	}
     	else if(position.equals("first inversion")) {
-    		if(topPitch - middlePitch == 6)
+    		if(topMIDIValue - middleMIDIValue == 6)
     			valid = false;
     	}
     	else if(position.equals("second inversion")) {
-    		if(middlePitch - bottomPitch == 6)
+    		if(middleMIDIValue - bottomMIDIValue == 6)
     			valid = false;
     	}
     		
@@ -532,24 +515,20 @@ public class Composition implements NotesAndKeys
     	for(int i = 3; i <= 6; i++) {
     		Note proposed = new Note(tonic,i-1,model);
     		
-    		int tonicPitch = tonic.getPitch();
-    		int proposedPitch = proposed.getPitch();
-    		
-    		if(proposedPitch < tonicPitch)
-    			proposedPitch += 12;
+    		int difference = proposed.midiValue() - tonic.midiValue();
     		
     		if(route == 1) {
-    			if((proposedPitch - tonicPitch == 3) || (proposedPitch - tonicPitch == 4)) //third
+    			if((difference == 3) || (difference == 4)) //third
         			validIntervals.add(i);
     		}
     			
-    		if(proposedPitch - tonicPitch == 5) //perfect 4th
+    		if(difference == 5) //perfect 4th
     			validIntervals.add(i);
     		
-    		if(proposedPitch - tonicPitch == 7) //perfect 5th
+    		if(difference == 7) //perfect 5th
     			validIntervals.add(i);
     			
-    	    if(proposedPitch - tonicPitch == 8) //ascending m6
+    	    if(difference == 8) //ascending m6
     	    	validIntervals.add(i);
     	}
     	
@@ -563,13 +542,9 @@ public class Composition implements NotesAndKeys
     private boolean checkForTriTones(Note bottom,Note top) { //helper method of composeCantusFirmus.
     	//used to check for tritone between 2 notes.
     	//precondition: top is above bottom
-    	int bottomPitch = bottom.getPitch();
-        int topPitch = top.getPitch();
+    	int difference = top.midiValue() - bottom.midiValue();
 
-    	if(topPitch < bottomPitch)
-    		topPitch += 12;
-    	
-    	if(topPitch - bottomPitch == 6)
+    	if(difference == 6)
     		return true;
     	else
     		return false;
@@ -584,21 +559,17 @@ public class Composition implements NotesAndKeys
     	for(int i = 4; i <= 8; i++) {
     		Note proposed = new Note(tonic,i-1,model);
     		
-    		int tonicPitch = tonic.getPitch();
-    		int proposedPitch = proposed.getPitch();
+    		int difference = proposed.midiValue() - tonic.midiValue();
     		
-    		if(proposedPitch < tonicPitch)
-    			proposedPitch += 12;
-    		
-    		if(proposedPitch - tonicPitch == 5) //P4
+    		if(difference == 5) //P4
     			validIntervals.add(i);
-    		else if(proposedPitch - tonicPitch == 7) //P5
+    		else if(difference == 7) //P5
     			validIntervals.add(i);
-    		else if((proposedPitch - tonicPitch == 8) || (proposedPitch - tonicPitch == 9)) //sixth
+    		else if((difference == 8) || (difference == 9)) //sixth
     			validIntervals.add(i);
-    		else if(proposedPitch - tonicPitch == 10 && model.getMeasures() >= 11) //minor 7th
+    		else if(difference == 10 && model.getMeasures() >= 11) //minor 7th
     			validIntervals.add(i);
-    		else if(proposedPitch == tonicPitch && model.getMeasures() >= 12) //octave
+    		else if(difference == 12 && model.getMeasures() >= 12) //octave
     			validIntervals.add(i);
     	}
     	

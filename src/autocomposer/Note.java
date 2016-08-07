@@ -32,7 +32,7 @@ public class Note implements NotesAndKeys
 		}
 
 		octave = m.getOctaveOfCF();
-		midiValue = midiValue();	
+		midiValue = (12 * this.octave) + this.pitch + 12;	
 		relativePitch = 0;
 	}
 	public Note(Note firstNote,int relativePitch,Model m) {
@@ -64,11 +64,11 @@ public class Note implements NotesAndKeys
 	    	octave++;
 	    }
 	    
-		midiValue = midiValue();		
+		midiValue = (12 * this.octave) + this.pitch + 12;;		
 		this.relativePitch = relativePitch;
 	}
 	public int midiValue() {
-		return (12 * this.octave) + this.pitch + 12;
+		return midiValue;
 	}
 	public int getPitch() {
 		return pitch;
