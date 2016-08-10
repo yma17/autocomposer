@@ -50,15 +50,16 @@ public class Composition implements NotesAndKeys
 		int preFPContourType = this.determinePreFPContour();
 		info.setPreFPContourType(preFPContourType);
 		
-		/*
-		//these variables will be used later in the note-to-note composing methods
-		int firstBeginPoint = 1; //note-by-note begins composing here- always begins at 2nd note
-    	int firstEndPoint; //note-by-note stops composing here
-    	Note lastNote = cantusFirmus[0];
-    	Note twoNotesAgo = null; //note doesn't exist
-    	Note threeNotesAgo = null;
-    	*/
+		//update info- note-by-note composition beginning and end points to be used later
+		info.setPreFPBeginPoint(1); //2nd note
+		info.setPostFPBeginPoint(focalPoint+1); //note after focal point
+		info.setPostFPEndPoint(cantusFirmus.length-2); //2nd to last note
+		//preFPEndPoint to be set later in pre-determined note composition.
+		//when preFPContourType is 1 or 2, it is the note before the preFPNote.
+		//when preFPContourType is 3, it is the note before the focal point.
 		
+    	//pre-determined composition begins here. Notes such as the focal point and others are composed ahead of the main note-by-note composition.
+    	
     	if(preFPContourType == 1 || preFPContourType == 2) { //both types are similar as they both share a "pre focal point" note.
     		//In type 1, it is below the tonic in pitch
     		//In type 2, it is equal to the tonic in pitch
@@ -86,8 +87,15 @@ public class Composition implements NotesAndKeys
 
         			//leapToAdditionalInterval = 0 means that there are no legal intervals
     				if(leapToAdditionalInterval != 0) {
-    					this.composeAdditionalNoteStructure(preFPNote,leapToAdditionalInterval);
-    					specialStructureUsed = true; //to end composition of 
+    					this.composeAdditionalNoteStructure(preFPNote,leapToAdditionalInterval); //compose the planned structure
+    					specialStructureUsed = true; //to end composition of pre-determined notes
+    					
+    					//update info
+    					info.incrementLeapsSoFar(1);
+    					info.incrementLargeLeapsSoFar(1); 
+    					info.incrementStepsSoFar(1);
+    					info.incrementSmallerIntervalsSoFar(1);
+    					info.setPreFPEndPoint(focalPoint-3); //3 notes before focal pt
     				}
     				//if no legal intervals, don't employ any special structures
         		}
@@ -100,6 +108,11 @@ public class Composition implements NotesAndKeys
         			if(valid) {
         				this.composeFifthFourthStructure(preFPNote, fifth, focal);
         				specialStructureUsed = true;
+        				
+    					//update info
+        				info.incrementLargeLeapsSoFar(2);
+        				info.incrementLeapsSoFar(2);
+        				info.setPreFPEndPoint(focalPoint-3);
         			}
         		}
         		else if(d < 0.9) { //structure 3 - triad with preFP as bottom note and FP as top note (e.g. C-E-G)
@@ -135,6 +148,16 @@ public class Composition implements NotesAndKeys
             			if(valid) {
             				this.composeTriadStructure(preFPNote, middle, focal);
             				specialStructureUsed = true;
+            				
+            				//update info
+            				info.incrementLeapsSoFar(2);
+            				info.setPreFPEndPoint(focalPoint-3);
+            				if(position.indexOf("inversion") >= 0) { //is an inversion triad
+            					info.incrementLargeLeapsSoFar(1);
+            					info.incrementSmallerIntervalsSoFar(1);
+            				}
+            				else //root position triad
+            					info.incrementSmallerIntervalsSoFar(2);
             			}
             		}
         		}
@@ -145,8 +168,15 @@ public class Composition implements NotesAndKeys
     			int leapToFPInterval = this.determineLeapToFPInterval(preFPNote,false);
 
                 Note focal = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+leapToFPInterval,model);
+                
                 cantusFirmus[focalPoint-1] = preFPNote;
                 cantusFirmus[focalPoint] = focal;
+                
+                //update info
+                info.incrementLargeLeapsSoFar(1);
+                info.incrementLeapsSoFar(1);
+                info.setMaxPitch(focal.getRelativePitch());
+				info.setPreFPEndPoint(focalPoint-2);
     		}
 
     	}
@@ -156,12 +186,15 @@ public class Composition implements NotesAndKeys
         	Note focal = new Note(cantusFirmus[0],tonicToFPInterval,model);
         	
         	cantusFirmus[focalPoint] = focal;
+
+        	//update info (no consecutive notes = no step/leap info to update)
+        	info.setMaxPitch(focal.getRelativePitch());
+        	info.setPreFPEndPoint(focalPoint-1);
         }
     	
     	//now that the pre-determined focal point composition is complete,
     	//the note-to-note and the rest of the composition of the CF begins.
-    	
-    	
+    
     	
     	
     	
@@ -249,6 +282,7 @@ public class Composition implements NotesAndKeys
 		cantusFirmus[focalPoint-1] = additional;
 		cantusFirmus[focalPoint] = focal;
 		
+		//update info
 		info.setMaxPitch(focal.getRelativePitch());
     }
     //5th + 4th
@@ -258,6 +292,9 @@ public class Composition implements NotesAndKeys
     	cantusFirmus[focalPoint-2] = preFPNote;
 		cantusFirmus[focalPoint-1] = fifth;
 		cantusFirmus[focalPoint] = focal;
+		
+		//update info
+		info.setMaxPitch(focal.getRelativePitch());
     }
     //triad
     private void composeTriadStructure(Note bottom,Note middle,Note top) {
@@ -266,6 +303,9 @@ public class Composition implements NotesAndKeys
     	cantusFirmus[focalPoint-2] = bottom;
 		cantusFirmus[focalPoint-1] = middle;
 		cantusFirmus[focalPoint] = top;
+		
+		//update info
+		info.setMaxPitch(top.getRelativePitch());
     }
     
     

@@ -6,14 +6,19 @@ package autocomposer;
  * Variable of the Composition class.
  */
 public class CompositionInfo {
-	private int leapsSoFar;
-	private int stepsSoFar;
+	private int leapsSoFar; //3rd or higher
+	private int stepsSoFar; //2nd
 	private int largeLeapsSoFar; //4th or higher
-	private int smallerIntervalsSoFar;
-	private int maxPitch;
-	private int minPitch;
+	private int smallerIntervalsSoFar; //3rd or smaller
+	private int maxPitch; //highest relative pitch
+	private int minPitch; //lowest relative pitch
 	private int focalPoint; //index of the FP in CF (nth note minus 1)
 	private int preFPContourType; //of the cantus firmus
+	private int preFPBeginPoint; //note-by-note begins composing here (before FP)
+	private int preFPEndPoint; //note-by-note stops composing here (before FP)
+	private int postFPBeginPoint; //note-by-note begins composing here (after FP)
+	private int postFPEndPoint; //note-by-note stops composing here (after FP)
+	
 	public CompositionInfo() {
 		//default values
 		leapsSoFar = 0;
@@ -70,5 +75,44 @@ public class CompositionInfo {
 	}
 	public void setPreFPContourType(int type) { //determined in composeCantusFirmus
 		preFPContourType = type;
+	}
+	public int getPreFPBeginPoint() {
+		return preFPBeginPoint;
+	}
+	public void setPreFPBeginPoint(int location) { //determined in composeCantusFirmus
+		preFPBeginPoint = location;
+	}
+	public int getPreFPEndPoint() {
+		return preFPEndPoint;
+	}
+	public void setPreFPEndPoint(int location) { //determined in composeCantusFirmus
+		preFPEndPoint = location;
+	}
+	public int getPostFPBeginPoint() {
+		return postFPBeginPoint;
+	}
+	public void setPostFPBeginPoint(int location) { //determined in composeCantusFirmus
+		postFPBeginPoint = location;
+	}
+	public int getPostFPEndPoint() {
+		return postFPEndPoint;
+	}
+	public void setPostFPEndPoint(int location) { //determined in composeCantusFirmus
+		postFPEndPoint = location;
+	}
+	public String toString() {
+		//precondition: all instance variables initialized
+		return "leapsSoFar: " + leapsSoFar + "\n"
+				+ "stepsSoFar: " + stepsSoFar + "\n"
+				+ "largeLeapsSoFar: " + largeLeapsSoFar + "\n"
+				+ "smallerIntervalsSoFar: " + smallerIntervalsSoFar + "\n"
+				+ "maxPitch: " + maxPitch + "\n"
+				+ "minPitch: " + minPitch + "\n"
+				+ "focalPoint: " + focalPoint + "\n"
+				+ "preFPContourType: " + preFPContourType + "\n"
+				+ "preFPBeginPoint: " + preFPBeginPoint + "\n"
+				+ "preFPEndPoint: " + preFPEndPoint + "\n"
+				+ "postFPBeginPoint: " + postFPBeginPoint + "\n"
+				+ "postFPEndPoint: " + postFPEndPoint + "\n";
 	}
 }

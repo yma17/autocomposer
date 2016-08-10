@@ -1,12 +1,10 @@
 package testing;
 
-
-import autocomposer.Composition;
 import autocomposer.Model;
 import autocomposer.Note;
-import autocomposer.NoteUtilities;
+import autocomposer.Composition;
 import autocomposer.NotesAndKeys;
-import autocomposer.SoundPlayer;
+
 
 /* Tester class for this project.
  * 
@@ -16,6 +14,7 @@ public class AutocomposerTester implements NotesAndKeys
 
 	public static void main(String[] args)
 	{
+		/*
 		//testing all cases in composeCantusFirmus - works (no-args Model constructor)
 		Model m = new Model();
 		System.out.println(m.toString());
@@ -27,20 +26,23 @@ public class AutocomposerTester implements NotesAndKeys
         		System.out.println(i + "  " + cantusFirmus[i].toString());
         	}
 		}
+		*/
 		
-		/*
+		
 		//testing all cases in composeCantusFirmus - works (args Model constructor)
 		
-		Model m = new Model("C","Ionian",9);
+		Model m = new Model("C","Ionian",13);
 		Composition c = new Composition(m);
 		c.composeCantusFirmus();
+		System.out.println(c.info.toString());
 		Note[] cantusFirmus = c.getCantusFirmus();
 		for(int i = 0; i < cantusFirmus.length; i++) {
         	if(cantusFirmus[i] != null) {
         		System.out.println(i + "  " + cantusFirmus[i].toString());
         	}
         }
-        */
+        
+        
         
 		
 		//testing Case 1 in composeCantusFirmus - works

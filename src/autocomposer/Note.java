@@ -1,7 +1,5 @@
 package autocomposer;
 
-import java.util.Arrays;
-
 import autocomposer.NoteUtilities;
 
 /* A Note object simply serves to represent a note in the music. It contains
