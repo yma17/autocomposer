@@ -15,7 +15,7 @@ public class AutocomposerTester implements NotesAndKeys
 	{
 		//testing all cases in composeCantusFirmus - works?
 		
-		Model m = new Model("F","Lydian",13);
+		Model m = new Model("C","Ionian",9);
 		Composition c = new Composition(m);
 		c.composeCantusFirmus();
 		Note[] cantusFirmus = c.getCantusFirmus();

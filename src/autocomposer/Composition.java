@@ -33,226 +33,110 @@ public class Composition implements NotesAndKeys
         cantusFirmus[cantusFirmus.length-1] = cantusFirmus[0];
         
 		int focalPoint = this.determineFocalPointLocation();
+		info.setFocalPoint(focalPoint);
+		
 		int preFPContourType = this.determinePreFPContour();
+		info.setPreFPContourType(preFPContourType);
 		
-		//for testing
-		System.out.println("preFPContourType: " + preFPContourType);
-		
+		//these variables will be used later in the note-to-note composing methods
 		int firstBeginPoint = 1; //note-by-note begins composing here- always begins at 2nd note
     	int firstEndPoint; //note-by-note stops composing here
-    	
     	Note lastNote = cantusFirmus[0];
     	Note twoNotesAgo = null; //note doesn't exist
     	Note threeNotesAgo = null;
     	
-        if(preFPContourType== 1) { //defined by tonic to low point, leap to FP
-        	
-        	firstEndPoint = focalPoint - 2;
-        	
-        	int tonicToLowPointInterval = this.determineTonicToLPInterval();
-        	Note lowNote = new Note(cantusFirmus[0],tonicToLowPointInterval + 1,model);
-			info.setMinPitch(lowNote.getRelativePitch());
-			
-			//two routes from here- additional note one note under, immediately before focal point (special structure) or not.
-			
-			
-			//route 1 - additional note
-			double c = Math.random();
-			boolean toRouteTwo = true;
-			
-			if(focalPoint >= 6 && c < 0.15) {
-				int leapToAdditionalInterval = this.determineLeapToAdditionalInterval(lowNote);
-				
-				//if no valid intervals, abandon route 1 and go to route 2
-				boolean continueRouteOne = true;
-				if(leapToAdditionalInterval == 0) //no legal intervals
-					continueRouteOne = false;
-				
-				if(continueRouteOne) {
-					int tonicToAdditionalInterval = tonicToLowPointInterval + leapToAdditionalInterval + 1;
-					
-					Note additional = new Note(cantusFirmus[0],tonicToAdditionalInterval-1,model);
-					Note focal = new Note(cantusFirmus[0],tonicToAdditionalInterval,model); //exactly one note above
-					
-					cantusFirmus[focalPoint-3] = lowNote;
-					cantusFirmus[focalPoint-2] = additional;
-					cantusFirmus[focalPoint-1] = focal;
-					
-					info.setMaxPitch(focal.getRelativePitch());
-					
-					toRouteTwo = false; //completion of route 1 precludes route 2
-				}
-			}
-        	
-			//route 2 - no additional note
-			if(toRouteTwo) {
-				int leapToFPInterval = this.determineLeapToFPInterval(lowNote);
-				
-	        	int tonicToFPInterval = leapToFPInterval + tonicToLowPointInterval + 1;
-	        	
-	        	Note focal = new Note(cantusFirmus[0],tonicToFPInterval-1,model);
-	        	info.setMaxPitch(focal.getRelativePitch());
-	        	
-	        	//special structures
-	        	boolean specialStructureUsed = false;
-	        	
-	        	if(focalPoint >= 6) {
-	        		double d = Math.random();
-	        		    		
-	        		if(d < 0.1 && leapToFPInterval == 8) { //5th+4th. Only works if leapToFPInterval = 8 (octave).
-	        			Note fifth = new Note(cantusFirmus[0],lowNote.getRelativePitch()+4,model);
-	        			
-	        			boolean valid = this.checkFifthPlusFourth(lowNote, fifth);
-	        			
-	        			if(valid) {
-	        				cantusFirmus[focalPoint-3] = lowNote;
-	        				cantusFirmus[focalPoint-2] = fifth;
-	        				cantusFirmus[focalPoint-1] = focal;
-	        				specialStructureUsed = true;
-	        			}
-	        		}
-	        		else { //triad. Only works if leapToFPInterval = 5 or 6.
-	        			//note: opportunities for a triad are often minimized by several constraints within the code.
-	        			//value of d irrelevant to maximize chances of getting a triad.
-	        			Note middle = null;
-	        			boolean middleExists = false;
-	            		String position = "";
-	            		            		
-	            		if(leapToFPInterval == 5) { //root position triad
-	            			middle = new Note(cantusFirmus[0],lowNote.getRelativePitch()+2,model);
-	            			middleExists = true;
-	            			position = "root position";
-	            		}
-	            		else if(leapToFPInterval == 6) {
-	            			double x = Math.random();
-	            			if(x < 0.5) { //first inversion triad
-	            				middle = new Note(cantusFirmus[0],lowNote.getRelativePitch()+2,model);
-	                			middleExists = true;
-	            				position = "first inversion";
-	            			}
-	            			else { //second inversion triad
-	            				middle = new Note(cantusFirmus[0],lowNote.getRelativePitch()+3,model);
-	            				middleExists = true;
-	            				position = "second inversion";
-	            			}
-	            		}
+    	if(preFPContourType == 1 || preFPContourType == 2) { //both types are similar as they both share a "pre focal point" note.
+    		//In type 1, it is below the tonic in pitch
+    		//In type 2, it is equal to the tonic in pitch
+    		
+    		int tonicToPreFPInterval = this.determineTonicToPreFPInterval();
 
-	            		if(middleExists) {
-	            			boolean valid = this.checkTriadValidity(lowNote, middle, focal, position) && !this.checkForTriTones(cantusFirmus[0], focal);
-	            			if(valid) {
-	            				cantusFirmus[focalPoint-3] = lowNote;
-	            				cantusFirmus[focalPoint-2] = middle;
-	            				cantusFirmus[focalPoint-1] = focal;
-	            				specialStructureUsed = true;
-	            			}
-	            		}
-	        		}
-	        	}
-	        	
-	        	if(!specialStructureUsed) {
-	        		cantusFirmus[focalPoint-2] = lowNote;
-	        		cantusFirmus[focalPoint-1] = focal;
-	        	}
-			}
-        }
-        else if(preFPContourType == 2) { //defined by tonic back to tonic, leap to FP
-        	Note secondTonic = cantusFirmus[0];
-        	
-            //two routes from here- additional note one note under, immediately before focal point (special structure) or not.
-			
-			//route 1 - additional note
-			double c = Math.random();
-			
-			boolean toRouteTwo = true;
-			
-			if(focalPoint >= 6 && c < 0.15) {
-				int leapToAdditionalInterval = this.determineLeapToFPInterval(1);
-				
-				//if no valid intervals, abandon route 1 and go to route 2
-				boolean continueRouteOne = true;
-				if(leapToAdditionalInterval == 0) //no legal intervals
-					continueRouteOne = false;
-				
-				if(continueRouteOne) {
-					Note additional = new Note(cantusFirmus[0],leapToAdditionalInterval-1,model);
-					Note focal = new Note(cantusFirmus[0],leapToAdditionalInterval,model); //exactly one note above
-					
-					//to check possibility of tri tone between tonic and focal point
-					boolean triTone = this.checkForTriTones(secondTonic, focal);
-					
-					if(!triTone) {
-						cantusFirmus[focalPoint-3] = secondTonic;
-						cantusFirmus[focalPoint-2] = additional;
-						cantusFirmus[focalPoint-1] = focal;
-					
-						info.setMaxPitch(focal.getRelativePitch());
-					
-						toRouteTwo = false; //completion of route 1 precludes route 2
-					}
-				}
-			}
-        	
-			//route 2 - no additional note
-			if(toRouteTwo) {
-				int leapToFPInterval = this.determineLeapToFPInterval(2);
-				
-	        	Note focal = new Note(cantusFirmus[0],leapToFPInterval-1,model);
-	        	info.setMaxPitch(focal.getRelativePitch());
-	        	
-	        	//special structures
-	        	boolean specialStructureUsed = false;
-	        	
-	        	double d = Math.random();
-	        	
-	        	if(focalPoint >= 6 && d < 0.3) {
-	        		//triad. Only works if leapToFPInterval = 5 or 6.
-        			//note: unlike in case 1, there is little constraint, so variable d is used to control freq. of triads
+    		Note preFPNote = new Note(cantusFirmus[0],tonicToPreFPInterval,model);
+    		
+    		//in preFPContourType 1, preFPNote is lowest note in the cantus firmus
+    		if(preFPContourType == 1)
+    			info.setMinPitch(preFPNote.getRelativePitch());
+    		
+    		//special structures - additional note, 5th + 4th, triad.
+    		//requires for the focal point to be 6th note or more.
+    		boolean specialStructureUsed = false;
+    		
+    		if(focalPoint >= 5) {
+    			double d = Math.random();
+    			if(d < 0.1) { //structure 1 - additional note
+        			int leapToAdditionalInterval = this.determineLeapToAdditionalInterval(preFPNote);
+
+    				if(leapToAdditionalInterval != 0) { //there exists a legal interval
+    					this.composeAdditionalNoteStructure(preFPNote,leapToAdditionalInterval);
+    					specialStructureUsed = true;
+    				}
+        		}
+        		else if(d < 0.2) { //structure 2 - 5th + 4th
+        	    	Note fifth = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+4,model);
+        	    	Note focal = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+7,model);
+        			
+        			boolean valid = this.checkFifthPlusFourth(preFPNote,fifth,focal);
+        			
+        			if(valid) {
+        				this.composeFifthFourthStructure(preFPNote, fifth, focal);
+        				specialStructureUsed = true;
+        			}
+        		}
+        		else if(d < 0.9) { //structure 3 - triad
+        			//note: the probability is so high here, as there are several strict conditions that need to be met
+        			//in order for a triad to be composed (e.g. leapTOFPInterval must be 4 or 5). It is to make up for the restraints.
+        			int leapToFPInterval = this.determineLeapToFPInterval(preFPNote,true);
+
         			Note middle = null;
-        			boolean middleExists = false;
-            		String position = "";
-            		            		
-            		if(leapToFPInterval == 5) { //root position triad
-            			middle = new Note(cantusFirmus[0],cantusFirmus[0].getRelativePitch()+2,model);
-            			middleExists = true;
+        			Note focal = null;
+        			boolean triadPossible = (leapToFPInterval == 4) || (leapToFPInterval == 5);
+        			String position = "";
+        			
+        			if(leapToFPInterval == 4) { //root position triad
+        				middle = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+2,model);
+        				focal = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+4,model);
             			position = "root position";
-            		}
-            		else if(leapToFPInterval == 6) {
+        			}
+        			else if(leapToFPInterval == 5) {
             			double x = Math.random();
             			if(x < 0.5) { //first inversion triad
-            				middle = new Note(cantusFirmus[0],cantusFirmus[0].getRelativePitch()+2,model);
-                			middleExists = true;
+            				middle = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+2,model);
+            				focal = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+5,model);
             				position = "first inversion";
             			}
             			else { //second inversion triad
-            				middle = new Note(cantusFirmus[0],cantusFirmus[0].getRelativePitch()+3,model);
-            				middleExists = true;
+            				middle = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+3,model);
+            				focal = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+5,model);
             				position = "second inversion";
             			}
             		}
-
-            		if(middleExists) {
-            			boolean valid = this.checkTriadValidity(secondTonic, middle, focal, position);
+        			
+        			if(triadPossible) {
+            			boolean valid = this.checkTriadValidity(preFPNote, middle, focal, position);
             			if(valid) {
-            				cantusFirmus[focalPoint-3] = secondTonic;
-            				cantusFirmus[focalPoint-2] = middle;
-            				cantusFirmus[focalPoint-1] = focal;
+            				this.composeTriadStructure(preFPNote, middle, focal);
             				specialStructureUsed = true;
             			}
             		}
-	        	}
-	        	
-	        	if(!specialStructureUsed) {
-	        		cantusFirmus[focalPoint-2] = secondTonic;
-	        		cantusFirmus[focalPoint-1] = focal;
-	        	}
-			}
-        }
-        else { //precontour = type 3
+        		}
+    		}
+
+    		//no special structure used
+    		if(!specialStructureUsed) {
+    			int leapToFPInterval = this.determineLeapToFPInterval(preFPNote,false);
+
+                Note focal = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+leapToFPInterval,model);
+                cantusFirmus[focalPoint-1] = preFPNote;
+                cantusFirmus[focalPoint] = focal;
+    		}
+
+    	}
+    	else { //precontour = type 3
         	int tonicToFPInterval = this.determineFocalPoint();
+
+        	Note focal = new Note(cantusFirmus[0],tonicToFPInterval,model);
         	
-        	Note focal = new Note(cantusFirmus[0],tonicToFPInterval-1,model);
-        	
-        	cantusFirmus[focalPoint-1] = focal;
+        	cantusFirmus[focalPoint] = focal;
         }
         	/*
         	boolean focalPointCanBeFour = true;
@@ -322,46 +206,79 @@ public class Composition implements NotesAndKeys
     
     
     
-    //composeCantusFirmus() helper methods, in order of appearance
+    //composeCantusFirmus() helper methods
+    
+    
+    //special structure composing methods
+    
+    //additional note
+    private void composeAdditionalNoteStructure(Note preFPNote,int leapToAdditionalInterval) {	
+    	Note additional = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+leapToAdditionalInterval,model);
+		Note focal = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+leapToAdditionalInterval+1,model); //exactly one note above
+    	
+		int focalPoint = info.getFocalPoint();
+		
+		cantusFirmus[focalPoint-2] = preFPNote;
+		cantusFirmus[focalPoint-1] = additional;
+		cantusFirmus[focalPoint] = focal;
+		
+		info.setMaxPitch(focal.getRelativePitch());
+    }
+    //5th + 4th
+    private void composeFifthFourthStructure(Note preFPNote,Note fifth,Note focal) {
+    	int focalPoint = info.getFocalPoint();
+    	
+    	cantusFirmus[focalPoint-2] = preFPNote;
+		cantusFirmus[focalPoint-1] = fifth;
+		cantusFirmus[focalPoint] = focal;
+    }
+    //triad
+    private void composeTriadStructure(Note bottom,Note middle,Note top) {
+        int focalPoint = info.getFocalPoint();
+    	
+    	cantusFirmus[focalPoint-2] = bottom;
+		cantusFirmus[focalPoint-1] = middle;
+		cantusFirmus[focalPoint] = top;
+    }
+    
+    
+    //other helper methods
     private int determineFocalPointLocation() //helper method of composeCantusFirmus. Determines the index of the focal point in the CF.
     {
     	//based entirely on randomization.
     	int n = model.getMeasures();
     	double x = Math.random();
     	if(n == 9)
-    		return 5; //focal point is 5th note of cantus firmus in this case (what is returned minus 1)
+    		return 4; //focal point is 5th note of cantus firmus in this case (what is returned minus 1)
     	else if(n == 10)
-    		return 6;
+    		return 5; //6th note of CF
     	else if(n == 11) {
     		if(x < 0.5)
-    			return 6;
+    			return 5;
     		else
-    			return 7;
+    			return 6; //7th note of CF
     	}
     	else if(n == 12) {
     	    if(x < 0.333)
-    	    	return 6;
+    	    	return 5;
     		else if(x < 0.666)
-    			return 7;
+    			return 6;
     		else
-    			return 8;
+    			return 7; //8th note of CF
     	}
     	else { //13 measures
     		if(x < 0.25)
-    			return 6;
+    			return 5;
     		else if(x < 0.5)
-    			return 7;
+    			return 6;
     		else if(x < 0.75)
-    			return 8;
+    			return 7;
     		else
-    			return 9;
+    			return 8; //9th note of CF
     	}
     }
     private int determinePreFPContour() { //helper method of composeCantusFirmus. Determines the contour from the first note to the FP.
     	double x = Math.random();
-    	
-    	//for testing
-    	System.out.println(x);
     	
     	if(x < 0.3333)
     		return 1; //Type 1 = go down to low point and leap to focal point
@@ -370,41 +287,48 @@ public class Composition implements NotesAndKeys
     	else
     		return 3; //Type 3 = gradual motion upwards towards focal point
     }
-    private int determineTonicToLPInterval() { //Case I helper method. Determines the interval between the tonic and low point.
-    	ArrayList<Integer> validIntervals = new ArrayList<Integer>();
-    	
-    	//these intervals- valid in all cases
-    	validIntervals.add(-2);
-    	validIntervals.add(-3);
-    	validIntervals.add(-4);
-    	
-    	//check for tri tone in 5th interval
-    	Note fifthBelow = new Note(cantusFirmus[0],-4,model);
-    	boolean triTone = this.checkForTriTones(fifthBelow,cantusFirmus[0]);
-    	if(!triTone)
-    		validIntervals.add(-5);
-    	
-    	int x = (int) (Math.random() * validIntervals.size());
-    	
-    	return validIntervals.get(x);
+    private int determineTonicToPreFPInterval() { //Case I helper method. Determines the interval between the tonic and pre focal point, in relative pitches.
+    	//precondition: preFPContourType is either 1 or 2.
+    	if(info.getPreFPContourType() == 2)
+    		return 0; //same note as tonic, no interval
+    	else {
+    		ArrayList<Integer> validIntervals = new ArrayList<Integer>();
+        	
+        	validIntervals.add(-1); //2nd
+        	validIntervals.add(-2); //3rd
+        	validIntervals.add(-3); //4th
+        	validIntervals.add(-4); //5th
+        	
+        	int x = (int) (Math.random() * validIntervals.size());
+        	
+        	return validIntervals.get(x);
+    	}
     }
-    public int determineLeapToAdditionalInterval(Note lowPoint) { //Case I helper method, route 1. Determines the interval between the low point and additional note.
-    	//checks fifth and sixth, the acceptable LP-AN intervals.
+    public int determineLeapToAdditionalInterval(Note preFPNote) { //composeCantusFirmus helper method. Determines the interval between the low point and additional note.
+    	//precondition: preFPContourType 1 or 2
+    	//checks fourth(type 2 only) fifth and sixth, the acceptable PF-AN intervals.
     	ArrayList<Integer> validIntervals = new ArrayList<Integer>();
 
-    	for(int i = 5; i <= 6; i++) {
-    		Note proposed = new Note(cantusFirmus[0],lowPoint.getRelativePitch()+i-1,model);
+    	for(int i = 3; i <= 5; i++) { //3-Perfect 4th, 4-Perfect 5th, 5-ascending m6
+    		if(!(i == 3 && info.getPreFPContourType() != 2)) {
+    			Note proposed = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+i,model);
 
-    		int difference = proposed.midiValue() - lowPoint.midiValue(); //difference in half steps between the two pitches
+    			int difference = proposed.midiValue() - preFPNote.midiValue(); //difference in half steps between the two pitches
     		
-    		//to avoid tri-tones between tonic and focal point
-    		boolean triTone = this.checkForTriTones(cantusFirmus[0],new Note(cantusFirmus[0],proposed.getRelativePitch()+1,model));
-    		
-    		if(proposed.getRelativePitch() >= 3 && !triTone) { //focal pt must be 4th or above tonic
-    			if(difference == 7) //perfect fifth
-    				validIntervals.add(i);
-    			else if(difference == 8) //ascending m6
-    				validIntervals.add(i);
+    			//to ensure steepness from focal point to tonic is legal
+    			int length = cantusFirmus.length - info.getFocalPoint();
+    			boolean notTooSteep = this.checkSteepness(length,proposed.getRelativePitch()+1);
+    			
+    			if(proposed.getRelativePitch() >= 3 && notTooSteep) { //focal pt must be 4th or above tonic
+    				if(difference == 5) { //perfect fourth
+    					if(info.getPreFPContourType() == 2)
+    						validIntervals.add(i);
+    				}
+    			    else if(difference == 7) //perfect fifth
+    					validIntervals.add(i);
+    				else if(difference == 8) //ascending m6
+    					validIntervals.add(i);
+    			}
     		}
     	}
     	
@@ -415,26 +339,31 @@ public class Composition implements NotesAndKeys
     	
     	return validIntervals.get(x);
     }
-    public int determineLeapToFPInterval(Note lowPoint) { //Case I helper method, route 2. Determines the interval between the low point and the focal point.
-    	//precondition: apart from "additional note" method.
-    	//lowest acceptable interval = 5th. Largest = 8th. Checks validity of all in between. (except 7th)
-    	//conditions: interval between tonic and focal point must be a 4th or greater. No tri-tones.
+    public int determineLeapToFPInterval(Note preFPNote,boolean triad) { //Helper method for composeCantusFirmus.
+    	//precondition: preFPContourType, 1 or 2
+    	//lowest acceptable interval = 5th for type 1, 4th for type 2. Largest = 8th. Checks validity of all in between. (except 7th)
+    	//conditions: interval between tonic and focal point must be a 4th or greater. No tri-tones. Not too steep.
+    	//triad: major 6th acceptable for interval.
     	ArrayList<Integer> validIntervals = new ArrayList<Integer>();
-    	for(int i = 5; i <= 8; i++) {
-    		if(i != 7) {  
+    	for(int i = 3; i <= 7; i++) { //3 = 4th, 4= 5th, 5 = asc m6, 7 = octave
+    		if(i != 6 && !(i == 3 && info.getPreFPContourType() != 2) ) {  
     			boolean valid = true;
     			
-    			Note proposed = new Note(cantusFirmus[0],lowPoint.getRelativePitch()+i-1,model);
+    			Note proposed = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+i,model);
     			
-    			int difference = proposed.midiValue() - lowPoint.midiValue();
+    			int difference = proposed.midiValue() - preFPNote.midiValue();
     			
     			if(difference == 6) //tri-tone
     				valid = false;
     			
-    			if(difference == 9) //no major 6ths, only ascending m6s allowed
+    			if(difference == 9 && !triad) //no major 6ths, except with triad
     				valid = false;
     			
-    			if(proposed.getRelativePitch() < 3) //less than a 4th
+    			if(proposed.getRelativePitch() < 3) //less than a 4th from tonic
+    				valid = false;
+    			
+    			int length = cantusFirmus.length - info.getFocalPoint();
+    			if(!this.checkSteepness(length, proposed.getRelativePitch())) //too steep
     				valid = false;
     			
     			if(valid) {
@@ -448,22 +377,24 @@ public class Composition implements NotesAndKeys
     	
     	return validIntervals.get(x);
     }
-    public boolean checkFifthPlusFourth(Note firstNote,Note fifth) { //Case I helper method. Checks validity of special structure 5th + 4th
-    	//precondition: interval between FP and LP is an octave, FP already composed, LP determined and to be composed.
-    	//also, interval between firstNOte and fifth is a 5th of some kind.
-    	int difference = fifth.midiValue() - firstNote.midiValue(); 
+    public boolean checkFifthPlusFourth(Note preFPNote,Note fifth,Note focal) { //composeCantusFirmus helper method. Checks validity of special structure 5th + 4th
+    	//precondition: preFPContourType is either 1 or 2.
+    	//also, interval between firstNote and fifth is a 5th of some kind. 
     	
-    	//to avoid tri-tones between tonic and focal point
-    	Note focal = new Note(cantusFirmus[0],firstNote.getRelativePitch()+7,model);
-		boolean triTone = this.checkForTriTones(cantusFirmus[0],focal);
-		
-		if(triTone)
-			return false;
-		
-    	if(difference == 7)
-    		return true;
-    	else
-    		return false;
+    	//check steepness between focal and tonic
+		int length = cantusFirmus.length - info.getFocalPoint();
+        boolean notTooSteep = this.checkSteepness(length, focal.getRelativePitch());
+        
+        if(notTooSteep) {
+        	int difference = fifth.midiValue() - preFPNote.midiValue(); 
+        	
+        	if(difference == 7)
+        		return true;
+        	else
+        		return false;
+        }
+        else
+        	return false;
     }
     public boolean checkTriadValidity(Note bottom,Note middle,Note top,String position) { //helper method for composeCantusFirmus. Checks for tri tones.
     	//precondition: position consistent with note names of bottom, middle, and top.
@@ -488,75 +419,49 @@ public class Composition implements NotesAndKeys
     		
         return valid;
     }
-    public int determineLeapToFPInterval(int route) { //helper method for composeCantusFirmus, case 2.
-    	//works with both route 1(additional route), and route 2(other), unlike case 1.
-    	//acceptable intervals: third (additional note only), P4, P5, ascending m6.
-    	//route 1 = additional note, route 2 = not additional note
-    	ArrayList<Integer> validIntervals = new ArrayList<Integer>();
-    	for(int i = 3; i <= 6; i++) {
-    		Note proposed = new Note(cantusFirmus[0],i-1,model);
-    		
-    		int difference = proposed.midiValue() - cantusFirmus[0].midiValue();
-    		
-    		if(route == 1) {
-    			if((difference == 3) || (difference == 4)) //third
-        			validIntervals.add(i);
-    		}
-    			
-    		if(difference == 5) //perfect 4th
-    			validIntervals.add(i);
-    		
-    		if(difference == 7) //perfect 5th
-    			validIntervals.add(i);
-    			
-    	    if(difference == 8) //ascending m6
-    	    	validIntervals.add(i);
-    	}
-    	
-    	if(validIntervals.size() == 0)
-    		return 0; //no valid intervals
-    	
-    	int x = (int) (Math.random() * validIntervals.size());
-    	
-    	return validIntervals.get(x);
-    }
-    private boolean checkForTriTones(Note bottom,Note top) { //helper method of composeCantusFirmus.
-    	//used to check for tritone between 2 notes.
-    	//precondition: top is above bottom
-    	int difference = top.midiValue() - bottom.midiValue();
-
-    	if(difference == 6)
-    		return true;
-    	else
-    		return false;
-    }
-    
     private int determineFocalPoint() { //helper method for composeCantusFirmus, case 3.
-    	//possibilities: perfect 4th, perfect 5th, sixth, minor 7th (if CF is 11 measures or longer), or octave (if CF is 12 measures or longer)
+    	//possibilities: perfect 4th, perfect 5th, sixth, minor 7th, or octave
     	//as usual, no tri-tones, Major 7ths
     	//as there is no leap up to FP, leap rules don't apply here
     	ArrayList<Integer> validIntervals = new ArrayList<Integer>();
     	
-    	for(int i = 4; i <= 8; i++) {
-    		Note proposed = new Note(cantusFirmus[0],i-1,model);
+    	for(int i = 3; i <= 7; i++) { //3-perfect 4th, 4-perfect 5th, 5-sixth, 6-minor 7th, 7-octave
+    		Note proposed = new Note(cantusFirmus[0],i,model);
     		
-    		int difference = proposed.midiValue() - cantusFirmus[0].midiValue();
+    		//to ensure steepness from focal point to tonic is legal- from both the beginning and end
+    		int lengthFromBeginning = info.getFocalPoint() + 1;
+			int lengthToEnd = cantusFirmus.length - info.getFocalPoint();
+			boolean notTooSteepFromBeginning = this.checkSteepness(lengthFromBeginning,proposed.getRelativePitch());
+			boolean notTooSteepToEnd = this.checkSteepness(lengthToEnd,proposed.getRelativePitch());
     		
-    		if(difference == 5) //P4
-    			validIntervals.add(i);
-    		else if(difference == 7) //P5
-    			validIntervals.add(i);
-    		else if((difference == 8) || (difference == 9)) //sixth
-    			validIntervals.add(i);
-    		else if(difference == 10 && model.getMeasures() >= 11) //minor 7th
-    			validIntervals.add(i);
-    		else if(difference == 12 && model.getMeasures() >= 12) //octave
-    			validIntervals.add(i);
+			if(notTooSteepFromBeginning && notTooSteepToEnd) {
+				int difference = proposed.midiValue() - cantusFirmus[0].midiValue();
+    		
+				if(difference == 5) //P4
+					validIntervals.add(i);
+				else if(difference == 7) //P5
+					validIntervals.add(i);
+				else if((difference == 8) || (difference == 9)) //sixth
+					validIntervals.add(i);
+				else if(difference == 10) //minor 7th
+					validIntervals.add(i);
+				else if(difference == 12) //octave
+					validIntervals.add(i);
+			}
     	}
     	
     	int x = (int) (Math.random() * validIntervals.size());
 		
 		return validIntervals.get(x);
+    }
+    private boolean checkSteepness(int length,int interval) { //check the steepness of the second half of the cantusFirmus.
+    	//length: # of notes from focal point to end
+    	//interval = from FP to tonic, in relative pitches
+    	//precondition: length is between 5 and 8
+    	if(interval <= length) //interval must never greater than length
+    		return true; //valid
+    	else
+    		return false;
     }
     
     /*
@@ -958,67 +863,6 @@ public class Composition implements NotesAndKeys
     	
     	return true;
     	
-    }
-    private boolean checkForTriTones(int firstPitch, int secondPitch, int interval) {
-    	if(interval == 4) {
-    		if(model.getMode().equals("Ionian")) {
-    			if((secondPitch == -1 && firstPitch == 3) || (secondPitch == 3 && firstPitch == -1))
-    				return true;
-    		}
-    		else if(model.getMode().equals("Dorian")) {
-    			if((secondPitch == -2 && firstPitch == 2) || (secondPitch == 2 && firstPitch == -2))
-    				return true;
-    		}
-    		else if(model.getMode().equals("Phrygian")) {
-    			if((secondPitch == -3 && firstPitch == 1) || (secondPitch == 1 && firstPitch == -3))
-    				return true;
-    		}
-    		else if(model.getMode().equals("Lydian")) {
-    			if((secondPitch == -4 && firstPitch == 0) || (secondPitch == 0 && firstPitch == -4)
-    					|| (secondPitch == 3 && firstPitch == 7) || (secondPitch == 7 && firstPitch == 3))
-    				return true;
-    		}
-    		else if(model.getMode().equals("Mixolydian")) {
-    			if((secondPitch == -5 && firstPitch == -1) || (secondPitch == -1 && firstPitch == -5)
-    					|| (secondPitch == 2 && firstPitch == -2) || (secondPitch == -2 && firstPitch == 2))
-    				return true;
-    		}
-    		else if(model.getMode().equals("Aeolian")) {
-    			if((secondPitch == -6 && firstPitch == -2) || (secondPitch == -2 && firstPitch == -6)
-    					|| (secondPitch == 1 && firstPitch == -3) || (secondPitch == -3 && firstPitch == 1))
-    				return true;
-    		}
-    	}
-    	else if(interval == 3) {
-    		if(model.getMode().equals("Ionian")) {
-    			if((secondPitch == 3 && firstPitch == 6) || (secondPitch == 6 && firstPitch == 6)
-    					|| (secondPitch == -4 && firstPitch == -1) || (secondPitch == -1 && firstPitch == -4))
-    				return true;
-    		}
-    		else if(model.getMode().equals("Dorian")) {
-    			if((secondPitch == 2 && firstPitch == 5) || (secondPitch == 5 && firstPitch == 2)
-    					|| (secondPitch == -5 && firstPitch == -2) || (secondPitch == -2 && firstPitch == -5))
-    				return true;
-    		}
-    		else if(model.getMode().equals("Phrygian")) {
-    			if((secondPitch == 1 && firstPitch == 4) || (secondPitch == 4 && firstPitch == 1)
-    					|| (secondPitch == -6 && firstPitch == -3) || (secondPitch == -3 && firstPitch == -6))
-    				return true;
-    		}
-    		else if(model.getMode().equals("Lydian")) {
-    			if((secondPitch == 0 && firstPitch == 3) || (secondPitch == 3 && firstPitch == 0))
-    				return true;
-    		}
-    		else if(model.getMode().equals("Mixolydian")) {
-    			if((secondPitch == -1 && firstPitch == 2) || (secondPitch == 2 && firstPitch == -1))
-    				return true;
-    		}
-    		else if(model.getMode().equals("Aeolian")) {
-    			if((secondPitch == -2 && firstPitch == 1) || (secondPitch == 1 && firstPitch == -2))
-    				return true;
-    		}
-    	}
-    	return false;
     }
     */
     private void composeCounterpoint(boolean istopLineCF) {

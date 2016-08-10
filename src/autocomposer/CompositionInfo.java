@@ -1,7 +1,7 @@
 package autocomposer;
 
 /* This class contains information of the structure of the composed work.
- * It is used extensively during the composition process to decide what to composed next.
+ * It is used extensively during the composition process to decide what to be composed next.
  */
 public class CompositionInfo {
 	private int leapsSoFar;
@@ -10,6 +10,8 @@ public class CompositionInfo {
 	private int smallerIntervalsSoFar;
 	private int maxPitch;
 	private int minPitch;
+	private int focalPoint; //index of the FP in CF (nth note minus 1)
+	private int preFPContourType; //of the cantus firmus
 	public CompositionInfo() {
 		//default values
 		leapsSoFar = 0;
@@ -55,5 +57,16 @@ public class CompositionInfo {
 	public void setMinPitch(int pitch) {
 		minPitch = pitch;
 	}
-
+	public int getFocalPoint() {
+		return focalPoint;
+	}
+	public void setFocalPoint(int focalPoint) { //determined in composeCantusFirmus
+		this.focalPoint = focalPoint;
+	}
+	public int getPreFPContourType() {
+		return preFPContourType;
+	}
+	public void setPreFPContourType(int type) { //determined in composeCantusFirmus
+		preFPContourType = type;
+	}
 }
