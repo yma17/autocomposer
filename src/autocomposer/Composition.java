@@ -157,6 +157,14 @@ public class Composition implements NotesAndKeys
         	
         	cantusFirmus[focalPoint] = focal;
         }
+    	
+    	//now that the pre-determined focal point composition is complete,
+    	//the note-to-note and the rest of the composition of the CF begins.
+    	
+    	
+    	
+    	
+    	
         	/*
         	boolean focalPointCanBeFour = true;
         	if(preFPContourType == 2) { //tonic back to tonic, leap to FP

@@ -23,7 +23,12 @@ public class Model implements NotesAndKeys
     {
     	this.determineKeyAndMode();
         measures = determineMeasures();
+        
         topLineIsCF = determineTopLineIsCF();
+        keyIsSharp = determineSharp(key,mode);
+        octaveOfCF = determineOctaveofCF(key,topLineIsCF,keyIsSharp);
+        this.specificNotes = determineSpecificNotes(key,mode,keyIsSharp);
+        this.determineOctaveValues();
     }
     public Model(String key, String mode, int measures) //in presence of user control, set user-preferred key, mode, length. Randomly determines CF.
     {
