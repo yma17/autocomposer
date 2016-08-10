@@ -1,19 +1,26 @@
 package autocomposer;
 
-import java.util.Arrays;
-
 import autocomposer.Model;
 import autocomposer.Note;
 import java.util.ArrayList;
 
+/* This class contains all methods used to compose the counterpoint.
+ * 
+ * Contains methods that use randomization and musical guidelines to decide
+ * specific variables and information about the music (e.g. contour, locations
+ * of certain musical points).
+ * 
+ * Methods in this class relay this information to the info variable, a storage
+ * space for necessary information to refer to throughout this entire process.
+ */
 public class Composition implements NotesAndKeys
 {
     //counterpoint composed- visually laid out
-	
-	private Note[] cantusFirmus;
-    private Note[] counterpoint; //may be written on top or below CF
-    public Model model;
-    public CompositionInfo info;
+	private Note[] cantusFirmus; //the main line; the line that the counterpoint will be written off of.
+    private Note[] counterpoint; //the second line; may be written on top or below CF
+    
+    public Model model; //contains all intrinsic information (e.g. key, mode, etc.) of the music to be composed. See Model class for specifics.
+    public CompositionInfo info; //contains information to refer to throughout the composition process. See CompositionInfo class for specifics.
     public Composition(Model m)
     {
     	cantusFirmus = new Note[m.getMeasures()];
@@ -32,46 +39,59 @@ public class Composition implements NotesAndKeys
         cantusFirmus[0] = new Note(model);
         cantusFirmus[cantusFirmus.length-1] = cantusFirmus[0];
         
+        //focal point = a "peak"-like point that the notes gradually build up towards and down from
 		int focalPoint = this.determineFocalPointLocation();
-		info.setFocalPoint(focalPoint);
+		info.setFocalPoint(focalPoint); //info updated whenever any necessary information is determined
 		
+		//preFPContourType refers to contours that lead up to the focal point - 3 types
+		//1 - notes go down to a low point, then leap to the focal point
+		//2 - notes return to tonic, then leap to the focal point
+		//3 - notes gradually build upward towards focal point
 		int preFPContourType = this.determinePreFPContour();
 		info.setPreFPContourType(preFPContourType);
 		
+		/*
 		//these variables will be used later in the note-to-note composing methods
 		int firstBeginPoint = 1; //note-by-note begins composing here- always begins at 2nd note
     	int firstEndPoint; //note-by-note stops composing here
     	Note lastNote = cantusFirmus[0];
     	Note twoNotesAgo = null; //note doesn't exist
     	Note threeNotesAgo = null;
-    	
+    	*/
+		
     	if(preFPContourType == 1 || preFPContourType == 2) { //both types are similar as they both share a "pre focal point" note.
     		//In type 1, it is below the tonic in pitch
     		//In type 2, it is equal to the tonic in pitch
     		
     		int tonicToPreFPInterval = this.determineTonicToPreFPInterval();
 
-    		Note preFPNote = new Note(cantusFirmus[0],tonicToPreFPInterval,model);
+    		//basic method - create a Note object, and if determined to be valid along with the rest of the structure, compose it to the cantusFirmus array
+    		
+    		Note preFPNote = new Note(cantusFirmus[0],tonicToPreFPInterval,model); //a tenative note to go immediately before the focal point
     		
     		//in preFPContourType 1, preFPNote is lowest note in the cantus firmus
     		if(preFPContourType == 1)
     			info.setMinPitch(preFPNote.getRelativePitch());
     		
-    		//special structures - additional note, 5th + 4th, triad.
-    		//requires for the focal point to be 6th note or more.
+    		
+    		//special structures are structures that are variations of the intended structure for each preFPContourType.
+    		//these structures require additional methods for deciding, checking, and verifying.
+    		//special structures possible here - additional note, 5th + 4th, triad.
     		boolean specialStructureUsed = false;
     		
-    		if(focalPoint >= 5) {
+    		if(focalPoint >= 5) { //requires for the focal point to be 6th note or more so that they don't feel "compressed" within the line.
     			double d = Math.random();
-    			if(d < 0.1) { //structure 1 - additional note
+    			if(d < 0.1) { //structure 1 - additional note one step down from focal point, between preFP and focal point. (e.g. C-G-A)
         			int leapToAdditionalInterval = this.determineLeapToAdditionalInterval(preFPNote);
 
-    				if(leapToAdditionalInterval != 0) { //there exists a legal interval
+        			//leapToAdditionalInterval = 0 means that there are no legal intervals
+    				if(leapToAdditionalInterval != 0) {
     					this.composeAdditionalNoteStructure(preFPNote,leapToAdditionalInterval);
-    					specialStructureUsed = true;
+    					specialStructureUsed = true; //to end composition of 
     				}
+    				//if no legal intervals, don't employ any special structures
         		}
-        		else if(d < 0.2) { //structure 2 - 5th + 4th
+        		else if(d < 0.2) { //structure 2 - 5th + 4th - additional note between preFP and FP a perfect fifth above preFP. (e.g. D-A-D)
         	    	Note fifth = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+4,model);
         	    	Note focal = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+7,model);
         			
@@ -82,15 +102,15 @@ public class Composition implements NotesAndKeys
         				specialStructureUsed = true;
         			}
         		}
-        		else if(d < 0.9) { //structure 3 - triad
-        			//note: the probability is so high here, as there are several strict conditions that need to be met
-        			//in order for a triad to be composed (e.g. leapTOFPInterval must be 4 or 5). It is to make up for the restraints.
+        		else if(d < 0.9) { //structure 3 - triad with preFP as bottom note and FP as top note (e.g. C-E-G)
+        			//note: the probability is so high here because there are several strict conditions that need to be met.
+        			//e.g. in order for a triad to be composed (e.g. leapTOFPInterval must be 4 or 5) (fifth or sixrh).
         			int leapToFPInterval = this.determineLeapToFPInterval(preFPNote,true);
 
+        			Note focal = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+leapToFPInterval,model);
+        			//the middle note of the triad, position depends on leapToFPInterval
         			Note middle = null;
-        			Note focal = null;
-        			boolean triadPossible = (leapToFPInterval == 4) || (leapToFPInterval == 5);
-        			String position = "";
+          			String position = "";
         			
         			if(leapToFPInterval == 4) { //root position triad
         				middle = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+2,model);
@@ -101,7 +121,6 @@ public class Composition implements NotesAndKeys
             			double x = Math.random();
             			if(x < 0.5) { //first inversion triad
             				middle = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+2,model);
-            				focal = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+5,model);
             				position = "first inversion";
             			}
             			else { //second inversion triad
@@ -111,7 +130,7 @@ public class Composition implements NotesAndKeys
             			}
             		}
         			
-        			if(triadPossible) {
+        			if(!position.equals("")) { //if initial conditions are met
             			boolean valid = this.checkTriadValidity(preFPNote, middle, focal, position);
             			if(valid) {
             				this.composeTriadStructure(preFPNote, middle, focal);
@@ -214,7 +233,7 @@ public class Composition implements NotesAndKeys
     //additional note
     private void composeAdditionalNoteStructure(Note preFPNote,int leapToAdditionalInterval) {	
     	Note additional = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+leapToAdditionalInterval,model);
-		Note focal = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+leapToAdditionalInterval+1,model); //exactly one note above
+		Note focal = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+leapToAdditionalInterval+1,model); //one note above
     	
 		int focalPoint = info.getFocalPoint();
 		
@@ -243,10 +262,10 @@ public class Composition implements NotesAndKeys
     
     
     //other helper methods
-    private int determineFocalPointLocation() //helper method of composeCantusFirmus. Determines the index of the focal point in the CF.
+    private int determineFocalPointLocation() //Determines the index of the focal point in the CF.
     {
     	//based entirely on randomization.
-    	int n = model.getMeasures();
+    	int n = model.getMeasures(); //depends on length of CF.
     	double x = Math.random();
     	if(n == 9)
     		return 4; //focal point is 5th note of cantus firmus in this case (what is returned minus 1)
@@ -277,8 +296,8 @@ public class Composition implements NotesAndKeys
     			return 8; //9th note of CF
     	}
     }
-    private int determinePreFPContour() { //helper method of composeCantusFirmus. Determines the contour from the first note to the FP.
-    	double x = Math.random();
+    private int determinePreFPContour() { //Determines the contour from the first note to the FP.
+    	double x = Math.random(); //randomly determined
     	
     	if(x < 0.3333)
     		return 1; //Type 1 = go down to low point and leap to focal point
@@ -287,13 +306,14 @@ public class Composition implements NotesAndKeys
     	else
     		return 3; //Type 3 = gradual motion upwards towards focal point
     }
-    private int determineTonicToPreFPInterval() { //Case I helper method. Determines the interval between the tonic and pre focal point, in relative pitches.
+    private int determineTonicToPreFPInterval() { //Determines the interval between the tonic and pre focal point, in relative pitches.
     	//precondition: preFPContourType is either 1 or 2.
     	if(info.getPreFPContourType() == 2)
     		return 0; //same note as tonic, no interval
     	else {
     		ArrayList<Integer> validIntervals = new ArrayList<Integer>();
         	
+    		//four intervals possible
         	validIntervals.add(-1); //2nd
         	validIntervals.add(-2); //3rd
         	validIntervals.add(-3); //4th
@@ -304,8 +324,9 @@ public class Composition implements NotesAndKeys
         	return validIntervals.get(x);
     	}
     }
-    public int determineLeapToAdditionalInterval(Note preFPNote) { //composeCantusFirmus helper method. Determines the interval between the low point and additional note.
-    	//precondition: preFPContourType 1 or 2
+    public int determineLeapToAdditionalInterval(Note preFPNote) { //Determines the interval between the low point and additional note, in relative pitches.
+    	//precondition: preFPContourType is either 1 or 2.
+    	//precondition: additional note special structure is being implemented.
     	//checks fourth(type 2 only) fifth and sixth, the acceptable PF-AN intervals.
     	ArrayList<Integer> validIntervals = new ArrayList<Integer>();
 
@@ -339,11 +360,11 @@ public class Composition implements NotesAndKeys
     	
     	return validIntervals.get(x);
     }
-    public int determineLeapToFPInterval(Note preFPNote,boolean triad) { //Helper method for composeCantusFirmus.
-    	//precondition: preFPContourType, 1 or 2
+    public int determineLeapToFPInterval(Note preFPNote,boolean triad) { //Determines the interval between the low point and focal point, in relative pitches.
+    	//precondition: preFPContourType is either 1 or 2.
+    	//precondition: either triad or no special structure is being implemented.
     	//lowest acceptable interval = 5th for type 1, 4th for type 2. Largest = 8th. Checks validity of all in between. (except 7th)
     	//conditions: interval between tonic and focal point must be a 4th or greater. No tri-tones. Not too steep.
-    	//triad: major 6th acceptable for interval.
     	ArrayList<Integer> validIntervals = new ArrayList<Integer>();
     	for(int i = 3; i <= 7; i++) { //3 = 4th, 4= 5th, 5 = asc m6, 7 = octave
     		if(i != 6 && !(i == 3 && info.getPreFPContourType() != 2) ) {  
@@ -353,10 +374,10 @@ public class Composition implements NotesAndKeys
     			
     			int difference = proposed.midiValue() - preFPNote.midiValue();
     			
-    			if(difference == 6) //tri-tone
+    			if(difference == 6) //no tri-tones allowed
     				valid = false;
     			
-    			if(difference == 9 && !triad) //no major 6ths, except with triad
+    			if(difference == 9 && !triad) //major 6th acceptable for interval for triad only.
     				valid = false;
     			
     			if(proposed.getRelativePitch() < 3) //less than a 4th from tonic
@@ -366,10 +387,8 @@ public class Composition implements NotesAndKeys
     			if(!this.checkSteepness(length, proposed.getRelativePitch())) //too steep
     				valid = false;
     			
-    			if(valid) {
+    			if(valid)
     				validIntervals.add(i);
-    				
-    			}
     		}
     	}
     	
@@ -377,9 +396,10 @@ public class Composition implements NotesAndKeys
     	
     	return validIntervals.get(x);
     }
-    public boolean checkFifthPlusFourth(Note preFPNote,Note fifth,Note focal) { //composeCantusFirmus helper method. Checks validity of special structure 5th + 4th
+    public boolean checkFifthPlusFourth(Note preFPNote,Note fifth,Note focal) { //Checks validity of special structure 5th + 4th.
     	//precondition: preFPContourType is either 1 or 2.
-    	//also, interval between firstNote and fifth is a 5th of some kind. 
+    	//precondition: 5th+4th special structure is being implemented.
+    	//precondition: interval between firstNote and fifth is a 5th of some kind. 
     	
     	//check steepness between focal and tonic
 		int length = cantusFirmus.length - info.getFocalPoint();
@@ -388,7 +408,7 @@ public class Composition implements NotesAndKeys
         if(notTooSteep) {
         	int difference = fifth.midiValue() - preFPNote.midiValue(); 
         	
-        	if(difference == 7)
+        	if(difference == 7) //Perfect 5th
         		return true;
         	else
         		return false;
@@ -396,13 +416,16 @@ public class Composition implements NotesAndKeys
         else
         	return false;
     }
-    public boolean checkTriadValidity(Note bottom,Note middle,Note top,String position) { //helper method for composeCantusFirmus. Checks for tri tones.
+    public boolean checkTriadValidity(Note bottom,Note middle,Note top,String position) { //Checks for tri tones within proposed triads.
+    	//precondition: triad special structure is being implemented.
     	//precondition: position consistent with note names of bottom, middle, and top.
     	boolean valid = true;
     	
     	int bottomMIDIValue = bottom.midiValue();
     	int middleMIDIValue = middle.midiValue();
     	int topMIDIValue = top.midiValue();
+    	
+    	//6 half steps = tri-tone
     	
     	if(position.equals("root position")) {
     		if(topMIDIValue - bottomMIDIValue == 6)
@@ -419,10 +442,11 @@ public class Composition implements NotesAndKeys
     		
         return valid;
     }
-    private int determineFocalPoint() { //helper method for composeCantusFirmus, case 3.
+    private int determineFocalPoint() { //the name of the method, basically.
+    	//precondition: preFPContourType is 3.
     	//possibilities: perfect 4th, perfect 5th, sixth, minor 7th, or octave
-    	//as usual, no tri-tones, Major 7ths
-    	//as there is no leap up to FP, leap rules don't apply here
+    	//as usual, no tri-tones or Major 7ths
+    	//as there is no single leap up to FP, leap rules don't apply here
     	ArrayList<Integer> validIntervals = new ArrayList<Integer>();
     	
     	for(int i = 3; i <= 7; i++) { //3-perfect 4th, 4-perfect 5th, 5-sixth, 6-minor 7th, 7-octave
@@ -454,10 +478,10 @@ public class Composition implements NotesAndKeys
 		
 		return validIntervals.get(x);
     }
-    private boolean checkSteepness(int length,int interval) { //check the steepness of the second half of the cantusFirmus.
+    private boolean checkSteepness(int length,int interval) { //check the validity of the steepness of a length of notes given the interval.
     	//length: # of notes from focal point to end
     	//interval = from FP to tonic, in relative pitches
-    	//precondition: length is between 5 and 8
+    	//why this is necessary: so a passage of notes going up or down does not feel "forced" due to the interval being too large.
     	if(interval <= length) //interval must never greater than length
     		return true; //valid
     	else

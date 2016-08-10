@@ -5,6 +5,8 @@ import java.util.Arrays;
 /* The Model serves as a template for the main composition algorithm to follow,
  * containing necessary intrinsic information of the counterpoint such as key,
  * mode, length, cantus firmus orientation, etc.
+ * 
+ * Variable of the Composition class.
  */
 public class Model implements NotesAndKeys
 {
@@ -15,13 +17,11 @@ public class Model implements NotesAndKeys
     public String[] specificNotes; //7 note names specific to the key and mode
     public boolean keyIsSharp; //whether the key contains sharps of flats (true = sharp)
     public int octaveOfCF; //octave that the first note of the cantus firmus is in
-    public int modeValue; //to make DIATONIC_INTERVALS compatible with any mode (Ionian-0, Dorian-1, Phrygian-2, Lydian-3, Mixolydian-4, Aeolian-5)
-    public int octaveUpValue; //how many notes up (relative pitch distance) from the tonic is required to raise the octave
-    public int octaveDownValue; //how many notes down (relative pitch distance) from the tonic is required to lower the octave
+    public int octaveUpValue; //how many notes up (relative pitch distance) from the tonic is required to raise the octave (always > 0)
+    public int octaveDownValue; //how many notes down (relative pitch distance) from the tonic is required to lower the octave (always < 0)
     public Model() //in absence in user control, generates random key, mode, length, CF
     {
-    	key = determineKey();
-    	mode = determineMode();
+    	this.determineKeyAndMode();
         measures = determineMeasures();
         topLineIsCF = determineTopLineIsCF();
     }
@@ -31,70 +31,56 @@ public class Model implements NotesAndKeys
         this.mode = mode;
         this.measures = measures;
         
-        if(mode.equals("Ionian"))
-        	modeValue = 0;
-        else if(mode.equals("Dorian"))
-        	modeValue = 1;
-        else if(mode.equals("Phrygian"))
-        	modeValue = 2;
-        else if(mode.equals("Lydian"))
-        	modeValue = 3;
-        else if(mode.equals("Mixolydian"))
-        	modeValue = 4;
-        else if(mode.equals("Aeolian"))
-        	modeValue = 5;
-        
         topLineIsCF = determineTopLineIsCF();
         keyIsSharp = determineSharp(key,mode);
         octaveOfCF = determineOctaveofCF(key,topLineIsCF,keyIsSharp);
         this.specificNotes = determineSpecificNotes(key,mode,keyIsSharp);
         this.determineOctaveValues();
     }
-    private String determineKey() //In absence of user control only. For sake of simplicity, each mode will be paired up with one specific key such that there are no accidentals
-    {
-        double x = Math.random();
-        if(x < 0.143)
-        	return "A";
-        else if(x < 0.286)
-        	return "B";
-        else if(x < 0.429)
-        	return "C";
-        else if(x < 0.571)
-        	return "D";
-        else if(x < 0.714)
-        	return "E";
-        else if(x < 0.857)
-        	return "F";
-        else
-        	return "G";
-    }
-    private String determineMode() {
+    
+    //helper methods called in constructors
+    private void determineKeyAndMode() { //in absence of user control only.
+    	//For sake of simplicity, key and mode combinations will allows for white keys only (no accidentals).
     	double x = Math.random();
-    	if(x < 0.167)
-        	return "Ionian";
-        else if(x < 0.333)
-        	return "Dorian";
-        else if(x < 0.500)
-        	return "Phrygian";
-        else if(x < 0.667)
-        	return "Lydian";
-        else if(x < 0.833)
-        	return "Mixolydian";
-        else
-        	return "Aeolian";
+    	
+    	if(x < 0.167) {
+    		key = "C";
+    		mode = "Ionian";
+    	}
+    	else if(x < 0.333) {
+    		key = "D";
+    		mode = "Dorian";
+    	}
+    	else if(x < 0.500) {
+    		key = "E";
+    		mode = "Phrygian";
+    	}
+    	else if(x < 0.667) {
+    		key = "F";
+    		mode = "Lydian";
+    	}
+    	else if(x < 0.833) {
+    		key = "G";
+    		mode = "Mixolydian";
+    	}
+    	else {
+    		key = "A";
+    		mode = "Aeolian";
+    	}
     }
-    private int determineMeasures() { //will be between 8 and 12 measures
+    private int determineMeasures() { //In absence of user control only.
+    	//will be between 9 and 13 measures.
         double x = Math.random() * 5;
-        return (int) x + 8;
+        return (int) x + 9;
     }
-    private boolean determineTopLineIsCF()
-    {
+    private boolean determineTopLineIsCF() {
+    	//determined entirely on randomization.
         double x = Math.random();
         if(x < 0.5)
             return true;
         return false;
     }
-    private boolean determineSharp(String key, String mode) {
+    private boolean determineSharp(String key, String mode) { //determines if the key used in sharp, flat, or natural.
     	//note: false = flat or natural
     	if(key.indexOf("sharp") >= 0 || key.equals("B"))
         	return true;
@@ -111,7 +97,7 @@ public class Model implements NotesAndKeys
         else
         	return false;
     }
-    private int determineOctaveofCF(String key, boolean topLineIsCF, boolean keyIsSharp) {
+    private int determineOctaveofCF(String key, boolean topLineIsCF, boolean keyIsSharp) { //determines octave of the first note of the CF.
     	//for testing purposes, for now, return 4
     	return 4;
     	/*
@@ -151,10 +137,10 @@ public class Model implements NotesAndKeys
     	}
     	*/
     }
-    public String[] determineSpecificNotes(String key, String mode, boolean sharp)
-    {
+    public String[] determineSpecificNotes(String key, String mode, boolean sharp) { //determine the 7-note scale of the given key and mode.
+    	//e.g. C Ionian: C-D-E-F-G-A-B
     	String[] specificNotes = new String[7];
-    	specificNotes = createRawScale(key,mode,sharp);
+    	specificNotes = createRawScale(key,mode,sharp); //raw scale - without enharmonics,double accidentals
     	
     	//convert to enharmonics, add double accidentals as needed
     	String basicNoteOfKey = key.substring(0,1);
@@ -192,14 +178,17 @@ public class Model implements NotesAndKeys
     	
     	return specificNotes;
     }
-    private String[] createRawScale(String key, String mode, boolean sharp) {
+    private String[] createRawScale(String key, String mode, boolean sharp) { //helper method of determineSpecificNotes.
+    	//raw scale only contains notes from NOTES or NOTES_SHARPS. Does not include necessary double accidentals or enharmonics.
     	String[] rawScale = new String[7];
     	int keyIndex = 0; //index of key in NoTES or NOTES_SHARPS
     	if(sharp) {
+    		//search for the index of the key (tonic note) in array
             for(int x = 0; x < NOTES_SHARPS.length; x++) {
                if(key.equals(NOTES_SHARPS[x]))
                     keyIndex = x;
             }
+            //given that index, search for the other 6 notes
             if(mode.equals("Ionian")) {
                 for(int x = 0; x < rawScale.length; x++)
                     rawScale[x] = NOTES_SHARPS[(keyIndex + IONIAN_DIATONIC_INTERVALS[x])%NOTES.length];
@@ -257,24 +246,32 @@ public class Model implements NotesAndKeys
         }
     	return rawScale;
     }
-    public void determineOctaveValues() {
-    	int octaveDownPitch = 0;
+    public void determineOctaveValues() { //determines octaveUpValue and octaveDownValue
+    	int octaveDownPitch = 0; //default value
+    	
+    	//as octaveUp/DownPitch refer to the # of rel.pitches from tonic needed to alter the octave,
+    	//this method finds the first note beneath the tonic that the octave changes (the first note
+    	//to pass C downwards). With each note searched, octaveDownPitch is lowered by 1 until the
+    	//lower octave is found. That value is set as octaveDownValue and used to find octaveUpValue.
 	    boolean stop = false;
-	    int i = 6;
-	    int lastPitch = NoteUtilities.findPitch(this.getKey(), this.getKeyIsSharp());
+	    int i = 6; //index of specific array, start at last value and work backwards
+	    int lastPitch = NoteUtilities.findPitch(this.getKey(), this.getKeyIsSharp()); //pitch of tonic
 	    while(!stop) {
-	    	octaveDownPitch--;
+	    	octaveDownPitch--; //1 rel. pitch further down
 	    	int thisPitch = NoteUtilities.findPitch(this.getSpecificArray()[i],this.getKeyIsSharp());
-	    	if(thisPitch > lastPitch) {
+	    	if(thisPitch > lastPitch) { //when the array of 12 notes comes back around, stop
 	    		stop = true;
 	    	}
 	    	lastPitch = thisPitch;
 	    	i--;
 	    }
+	    
 	    int octaveUpPitch = 8 + octaveDownPitch;
 	    this.octaveUpValue = octaveUpPitch;
 	    this.octaveDownValue = octaveDownPitch;
     }
+    
+    //accessor methods
     public String getKey()
     {
         return key;
@@ -302,10 +299,6 @@ public class Model implements NotesAndKeys
     public int getOctaveOfCF()
     {
     	return octaveOfCF;
-    }
-    public int getModeValue()
-    {
-    	return modeValue;
     }
     public int getOctaveUpValue()
     {

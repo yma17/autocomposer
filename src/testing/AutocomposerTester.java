@@ -8,6 +8,9 @@ import autocomposer.NoteUtilities;
 import autocomposer.NotesAndKeys;
 import autocomposer.SoundPlayer;
 
+/* Tester class for this project.
+ * 
+ */
 public class AutocomposerTester implements NotesAndKeys
 {
 

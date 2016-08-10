@@ -11,13 +11,13 @@ public class Note implements NotesAndKeys
 {
     public int midiValue;
 	public int pitch; // 0-11, 0 = C
-	public int octave; // 0-N
+	public int octave;
 	public String noteName;
 	public int relativePitch; //all notes a part of a piece of counterpoint; relativePitch = pitch in relation to that of tonic of CF
 	public Note(Model m) { //compose first note of cantus firmus
-		noteName = m.getKey();
+		noteName = m.getKey(); //first note = tonic
 		
-		pitch = 0;
+		pitch = 0; //default value
 		if(m.getKeyIsSharp()) {
 			for(int i = 0; i < NOTES_SHARPS.length; i++) {
 				if(NOTES_SHARPS[i].equals(noteName))
@@ -40,19 +40,21 @@ public class Note implements NotesAndKeys
 		//creates note by comparing to first note of the line
 		
 		int arrayValue = (relativePitch+56)%7; //value of note in specific array
+		//modulus - to avoid ArrayOutOfBoundsException
 		//56 - to cover all octaves used in music
 		noteName = m.getSpecificArray()[arrayValue];
 		pitch = NoteUtilities.findPitch(m.getSpecificArray()[arrayValue],m.getKeyIsSharp());
 		
 		//adjust octave as necessary
-		octave = firstNote.getOctave();
-		
-		int octaveRelPitchDistance = 0; //distance of octaves in relative pitches. Will increase by 7.
-	    if(relativePitch <= m.getOctaveDownValue()) {
+		octave = firstNote.getOctave(); //tonic
+		int octaveRelPitchDistance = 0; //distance of octaves in relative pitches. Will increase/decrease by 7 at a time with each octave.
+	    if(relativePitch <= m.getOctaveDownValue()) { //if relativePitch is lower than the value needed to lower the octave, the octave must be lowered
 	    	while(m.getOctaveDownValue() - relativePitch + octaveRelPitchDistance >= 7) {
+	    		//to lower additional octaves if relativePitch is low enough
 	    		octaveRelPitchDistance -= 7;
 	    		octave--;
 	    	}
+	    	//lower one octave
 	    	octave--;
 		    octaveRelPitchDistance = 0;
 	    }

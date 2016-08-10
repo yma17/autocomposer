@@ -1,5 +1,8 @@
 package autocomposer;
 
+/* Contains objective musical information, guidelines, and rules.
+ * 
+ */
 public interface NotesAndKeys
 {
 	String[] BASIC_NOTES = {"A","B","C","D","E","F","G"};
