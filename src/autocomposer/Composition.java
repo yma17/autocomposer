@@ -529,8 +529,6 @@ public class Composition implements NotesAndKeys
     	 * object. Another note is then proposed (while not allowing it to match the CounterpointError so the same mistake is
     	 * not made again) and composed in that note's place.
     	 */
-    	
-    	//use the following parameters for each note to 
     }
     //create helper methods as needed
     
