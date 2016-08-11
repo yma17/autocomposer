@@ -529,11 +529,41 @@ public class Composition implements NotesAndKeys
     	 * object. Another note is then proposed (while not allowing it to match the CounterpointError so the same mistake is
     	 * not made again) and composed in that note's place.
     	 */
+    	
+    	
     }
     //create helper methods as needed
-    
-    
-    
+    public ArrayList<Note> listRange(Note previous) { //lists raw range from fifth below to fifth above
+    	ArrayList<Note> range = new ArrayList<Note>();
+    	for(int i = -4; i <= 4; i++) {
+    		if(i != 0) //no repeated notes - guideline 3
+    			range.add(new Note(cantusFirmus[0],previous.getRelativePitch()+i,model));
+    	}
+    	return range;
+    }
+    public ArrayList<Note> listValidRange(ArrayList<Note> originalRange,int index,ArrayList<Note> previousNotes,ArrayList<Note> futureNotes) {
+    	//method will call helper methods for each specific guideline
+    }
+    public void raisePitches() { //to meet guidelines 1 and 2
+    	//implement after everything else
+    }
+    public boolean checkStepToLeapRatio() { //guideline 4
+    	
+    }
+    public boolean checkForTriTones(Note proposed,Note other) { //guideline 5
+    	
+    }    
+    public boolean checkOppositeMotion(Note twoAgo,Note last,Note next) { //guideline 7
+    	
+    }
+    public boolean checkOppositeMotionFromBehind(Note[] nextNotes) { //guideline 8/9
+    	
+    }
+    public boolean checkOppositeMotionFromAhead(Note[] lastNotes) { //guideline 8/9
+    	
+    }
+    public boolean checkTriToneStress()
+    public 
     
     private void composeCounterpoint(boolean istopLineCF) {
     	if(istopLineCF)
