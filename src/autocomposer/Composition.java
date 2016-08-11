@@ -195,6 +195,14 @@ public class Composition implements NotesAndKeys
     	//now that the pre-determined focal point composition is complete,
     	//the note-to-note and the rest of the composition of the CF begins.
     
+    	
+    	//compose empty section before focal point
+    	//call note-by-note composition method
+    	//(insert code here)
+    	
+    	//compose empty sectionafter focal point
+    	//call note-by-note composition method
+    	//(insert code here)
     }
     
     
@@ -468,6 +476,67 @@ public class Composition implements NotesAndKeys
     	else
     		return false;
     }
+    
+    
+    
+    
+    //note-by-note composition methods
+    
+    public void composeNoteByNote() {
+    	//basic method, steps to follow:
+    	
+    	/* Create a method called listRange that lists all possibilities of
+    	 * the next note to be composed as all notes from a 5th above the last note to the fifth below.
+    	 * 
+    	 * Then, for each proposed note, utilize the counterpoint guidelines to check the validity of each one 
+    	 * and create a valid list of possibilities.
+    	 * 
+    	 * Guidelines [and necessary parameters/information for method to verify/check these guidelines]:
+    	 * 1. raise leading tone at cadence in minor, G modes
+    	 * 		[mode, previous one/two notes and the note after (to decide if note is part of a cadence]
+    	 * 2. raise 6th and 7th scale degrees in ascending fragment 5-#6-#7-1 in minor modes
+    	 * 		[mode, previous one/two notes and the note after (to decide if note is part of that ascending fragment]
+    	 * 3. no repeated notes.
+    	 * 		[the previous note and/or the note after]
+    	 * 4. melodic motion mostly by steps. (Decision by the programmer: never more leaps than steps)
+    	 * 		[number of steps so far, number of leaps so far]
+    	 * 5. no augmented, diminished intervals (e.g. B-F)
+    	 * 		[the previous note and/or the note after]
+    	 * 6. leaps not larger than perfect 5th
+    	 * 		[no info necessary: listRange will ensure that all proposed notes are never over a 5th away]
+    	 * 7. all leaps either preceded or followed by motion in the opposite direction
+    	 * 		[the previous two notes and/or the note after]
+    	 * 8. ascending m6, octaves (only found in leap rom preFP to focal point, never elsewhere)
+    	 *    both preceded and followed by motion in the opposite direction
+    	 *		[TBD - not sure how this would work at this point]
+    	 * 9. Two successive leaps in same direction must be preceded and followed by motion in the opposite direction
+    	 *    and may outline only a major or minor triad (not a diminished triad)
+    	 *		[TBD - not sure how this would work at this point]
+    	 * 10. Last 3 or 4 pitches in a single direction should not stress a tri-tone (e.g. Bb-C-D-E) (dim. 5th is fine)
+    	 * 		[the previous three notes (composing from the last pitch in that passage)]
+    	 * 11. Last note approached by step from above or below.
+    	 * 		[the index of the note to be composed - is it cantusFirmus.length - 2?]
+    	 * 
+    	 * After list of valid intervals is created, a random one is selected as the next note.
+    	 * 
+    	 * The next note is composed next.
+    	 * 
+    	 * The entire process is contained within a for loop, with the index representing the indices of cantusFirmus
+    	 * that need to be composed. (e.g. for(int i = 1; i <= 3; i++) to compose the 2nd to 4th notes in cantusFirmus)
+    	 * 
+    	 * If there are no possible valid intervals left for the next note (dead end), something wrong was done in the past
+    	 * that led to this; it needs to be fixed. If so, un-compose the last note composed, and store it in a CounterpointError
+    	 * object. Another note is then proposed (while not allowing it to match the CounterpointError so the same mistake is
+    	 * not made again) and composed in that note's place.
+    	 */
+    	
+    	//use the following parameters for each note to 
+    }
+    //create helper methods as needed
+    
+    
+    
+    
     private void composeCounterpoint(boolean istopLineCF) {
     	if(istopLineCF)
     		this.composeBottomVoice();
