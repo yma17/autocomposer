@@ -582,10 +582,40 @@ public class Composition implements NotesAndKeys
     	return range;
     }
     public ArrayList<Note> listValidRange(ArrayList<Note> originalRange,int index,ArrayList<Note> previousNotes,ArrayList<Note> futureNotes) {
-    	//method will call helper methods for each specific guideline
+    	ArrayList<Note> validRange = new ArrayList<Note>();
+    	for(int i = 0; i < originalRange.size(); i++) {
+    		Note proposed = originalRange.get(i);
+    		
+    		boolean valid = true;
+    		
+        	//method will call helper methods for each specific guideline
+            if(!checkStepToLeapRatio())
+            	valid = false;
+            if(!checkForTriTones(proposed,previousNotes.get(2)))
+            	valid = false;
+            if(!checkOppositeMotion(previousNotes.get(0),previousNotes.get(1),previousNotes.get(2),proposed))
+            	valid = false;
+            if(previousNotes.get(0) != null && previousNotes.get(1) != null) { //if the entire previousNotes array is valid (get(2) is always valid(first note tonic))
+            	if(!checkOppositeMotionFromAhead(previousNotes))
+            		valid = false;
+            	if(!checkTriToneStress(previousNotes))
+            		valid = false;
+            }
+            if(futureNotes.get(0) != null) {
+            	if(!checkForTriTones(proposed,futureNotes.get(0)))
+            		valid = false;
+            	if(!checkOppositeMotion(previousNotes.get(1),previousNotes.get(2),proposed,futureNotes.get(1)))
+            		valid = false;
+            	if(futureNotes.get(1) != null && futureNotes.get(2) != null) { //if the entire futureNotes array is valid
+            		if(!checkOppositeMotionFromBehind(futureNotes))
+            			valid = false;
+            	}
+            }   	
+    	}
+    	return validRange;
     }
     public void raisePitches() { //to meet guidelines 1 and 2
-    	//implement after everything else
+    	//implement after everything else - not a guideline to be checked during the note-by-note phase. Will be implemented at the end.
     }
     public boolean checkStepToLeapRatio() { //guideline 4
     	
@@ -593,8 +623,26 @@ public class Composition implements NotesAndKeys
     public boolean checkForTriTones(Note proposed,Note other) { //guideline 5
     	
     }    
-    public boolean checkOppositeMotion(Note twoAgo,Note last,Note next) { //guideline 7
-    	
+    public boolean checkOppositeMotion(Note first,Note second,Note third,Note fourth) { //guideline 7
+    	//precondition: all parameters are valid Note objects
+    	//precondition: one of two conditions
+    	//one - proposed note is fourth (always checked with each note composed)
+    	//two - proposed note is third (only checked when there exists a Note directly ahead of the to-be-composed note
+    	boolean motionUp = third.midiValue() > second.midiValue();
+    	if(motionUp) {
+    		boolean eitherSideMotionDown = (first.midiValue() > second.midiValue()) || (third.midiValue() > fourth.midiValue());
+    		if(eitherSideMotionDown)
+    			return true; //valid
+    		else
+    			return false; //not valid
+    	}
+    	else { //motionDown
+    		boolean eitherSideMotionUp = (first.midiValue() < second.midiValue()) || (third.midiValue() < fourth.midiValue());
+    		if(eitherSideMotionUp)
+    			return true;
+    		else
+    			return false;
+    	}
     }
     public boolean checkOppositeMotionFromBehind(ArrayList<Note> nextNotes) { //guideline 8/9
     	
