@@ -14,10 +14,6 @@ public class CompositionInfo {
 	private int minPitch; //lowest relative pitch
 	private int focalPoint; //index of the FP in CF (nth note minus 1)
 	private int preFPContourType; //of the cantus firmus
-	private int preFPBeginPoint; //note-by-note begins composing here (before FP)
-	private int preFPEndPoint; //note-by-note stops composing here (before FP)
-	private int postFPBeginPoint; //note-by-note begins composing here (after FP)
-	private int postFPEndPoint; //note-by-note stops composing here (after FP)
 	
 	public CompositionInfo() {
 		//default values
@@ -76,30 +72,6 @@ public class CompositionInfo {
 	public void setPreFPContourType(int type) { //determined in composeCantusFirmus
 		preFPContourType = type;
 	}
-	public int getPreFPBeginPoint() {
-		return preFPBeginPoint;
-	}
-	public void setPreFPBeginPoint(int location) { //determined in composeCantusFirmus
-		preFPBeginPoint = location;
-	}
-	public int getPreFPEndPoint() {
-		return preFPEndPoint;
-	}
-	public void setPreFPEndPoint(int location) { //determined in composeCantusFirmus
-		preFPEndPoint = location;
-	}
-	public int getPostFPBeginPoint() {
-		return postFPBeginPoint;
-	}
-	public void setPostFPBeginPoint(int location) { //determined in composeCantusFirmus
-		postFPBeginPoint = location;
-	}
-	public int getPostFPEndPoint() {
-		return postFPEndPoint;
-	}
-	public void setPostFPEndPoint(int location) { //determined in composeCantusFirmus
-		postFPEndPoint = location;
-	}
 	public String toString() {
 		//precondition: all instance variables initialized
 		return "leapsSoFar: " + leapsSoFar + "\n"
@@ -109,10 +81,6 @@ public class CompositionInfo {
 				+ "maxPitch: " + maxPitch + "\n"
 				+ "minPitch: " + minPitch + "\n"
 				+ "focalPoint: " + focalPoint + "\n"
-				+ "preFPContourType: " + preFPContourType + "\n"
-				+ "preFPBeginPoint: " + preFPBeginPoint + "\n"
-				+ "preFPEndPoint: " + preFPEndPoint + "\n"
-				+ "postFPBeginPoint: " + postFPBeginPoint + "\n"
-				+ "postFPEndPoint: " + postFPEndPoint + "\n";
+				+ "preFPContourType: " + preFPContourType + "\n";
 	}
 }
