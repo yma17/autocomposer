@@ -35,9 +35,9 @@ public class Composition implements NotesAndKeys
     }
     public void composeCantusFirmus() //composes the cantus firmus
     {        
-        //first note & last note = tonic
-        cantusFirmus[0] = new Note(model);
-        cantusFirmus[cantusFirmus.length-1] = cantusFirmus[0];
+        //compose first note & last note = tonic
+        this.composeNote(new Note(model),0,true);
+        this.composeNote(cantusFirmus[0],cantusFirmus.length-1,true);
         
         //focal point = a "peak"-like point that the notes gradually build up towards and down from
 		int focalPoint = this.determineFocalPointLocation();
@@ -169,9 +169,9 @@ public class Composition implements NotesAndKeys
 
                 Note focal = new Note(cantusFirmus[0],preFPNote.getRelativePitch()+leapToFPInterval,model);
                 
-                cantusFirmus[focalPoint-1] = preFPNote;
-                cantusFirmus[focalPoint] = focal;
-                
+                this.composeNote(preFPNote, focalPoint-1, true);
+                this.composeNote(focal, focalPoint, true);
+               
                 //update info
                 info.incrementLargeLeapsSoFar(1);
                 info.incrementLeapsSoFar(1);
@@ -185,7 +185,7 @@ public class Composition implements NotesAndKeys
 
         	Note focal = new Note(cantusFirmus[0],tonicToFPInterval,model);
         	
-        	cantusFirmus[focalPoint] = focal;
+        	this.composeNote(focal, focalPoint, true);
 
         	//update info (no consecutive notes = no step/leap info to update)
         	info.setMaxPitch(focal.getRelativePitch());
@@ -219,10 +219,10 @@ public class Composition implements NotesAndKeys
     	
 		int focalPoint = info.getFocalPoint();
 		
-		cantusFirmus[focalPoint-2] = preFPNote;
-		cantusFirmus[focalPoint-1] = additional;
-		cantusFirmus[focalPoint] = focal;
-		
+		this.composeNote(preFPNote,focalPoint-2,true);
+		this.composeNote(additional,focalPoint-1,true);
+		this.composeNote(focal,focalPoint,true);
+
 		//update info
 		info.setMaxPitch(focal.getRelativePitch());
     }
@@ -230,9 +230,9 @@ public class Composition implements NotesAndKeys
     private void composeFifthFourthStructure(Note preFPNote,Note fifth,Note focal) {
     	int focalPoint = info.getFocalPoint();
     	
-    	cantusFirmus[focalPoint-2] = preFPNote;
-		cantusFirmus[focalPoint-1] = fifth;
-		cantusFirmus[focalPoint] = focal;
+    	this.composeNote(preFPNote,focalPoint-2,true);
+		this.composeNote(fifth,focalPoint-1,true);
+		this.composeNote(focal,focalPoint,true);
 		
 		//update info
 		info.setMaxPitch(focal.getRelativePitch());
@@ -241,9 +241,9 @@ public class Composition implements NotesAndKeys
     private void composeTriadStructure(Note bottom,Note middle,Note top) {
         int focalPoint = info.getFocalPoint();
     	
-    	cantusFirmus[focalPoint-2] = bottom;
-		cantusFirmus[focalPoint-1] = middle;
-		cantusFirmus[focalPoint] = top;
+    	this.composeNote(bottom,focalPoint-2,true);
+		this.composeNote(middle,focalPoint-1,true);
+		this.composeNote(top,focalPoint,true);
 		
 		//update info
 		info.setMaxPitch(top.getRelativePitch());
@@ -251,6 +251,13 @@ public class Composition implements NotesAndKeys
     
     
     //other helper methods
+    private void composeNote(Note toBeComposed,int index,boolean CF) {
+    	if(CF)
+    		cantusFirmus[index] = toBeComposed;
+    	else //second line - counterpoint
+    		counterpoint[index] = toBeComposed;
+    	info.incrementNotesComposed();
+    }
     private int determineFocalPointLocation() //Determines the index of the focal point in the CF.
     {
     	//based entirely on randomization.

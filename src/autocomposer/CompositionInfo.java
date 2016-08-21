@@ -104,8 +104,8 @@ public class CompositionInfo {
 	public int getNotesComposed() {
 		return notesComposed;
 	}
-	public void incrementNotesComposed(int number) {
-		notesComposed += number;
+	public void incrementNotesComposed() {
+		notesComposed++;
 	}
 	public String toString() {
 		//precondition: all instance variables initialized
