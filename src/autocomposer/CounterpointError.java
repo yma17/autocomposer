@@ -1,18 +1,21 @@
 package autocomposer;
 
-import java.util.ArrayList;
-
+/* Counterpoint Error consists of a Note object and an array index.
+ * Used during note-by-note composition to resolve "dead-end situations".
+ * While resolving a dead end, the algorithm cannot proposed this Note at this index.
+ */
 public class CounterpointError {
-	public ArrayList<Integer> error;
-	public int endIndex;
-	public CounterpointError(int note,int index)
+	public Note errorNote;
+	public int index;
+	public CounterpointError(Note note,int index)
 	{
-		error = new ArrayList<Integer>();
-		error.add(note);
-		endIndex = index;
+		errorNote = note;
+		this.index = index;
 	}
-	public void addToError(int note)
-	{
-		error.add(0,note);
+	public Note getErrorNote() {
+		return errorNote;
+	}
+	public int getIndex() {
+		return index;
 	}
 }

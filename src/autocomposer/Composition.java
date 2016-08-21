@@ -21,6 +21,7 @@ public class Composition implements NotesAndKeys
     
     public Model model; //contains all intrinsic information (e.g. key, mode, etc.) of the music to be composed. See Model class for specifics.
     public CompositionInfo info; //contains information to refer to throughout the composition process. See CompositionInfo class for specifics.
+    public CounterpointError toAvoid = null;
     public Composition(Model m)
     {
     	cantusFirmus = new Note[m.getMeasures()];
@@ -568,14 +569,36 @@ public class Composition implements NotesAndKeys
     		
     		rangeForNextNote = this.listValidRange(rangeForNextNote, i, previousNotes, futureNotes);
     		
+    		/* procedure for managing errors/dead ends.
+    		 * Once a dead end for valid next notes is reached, a CounterpointError object is created
+    		 * with the previous note composed and the previous index, and is set to instance variable
+    		 * toAvoid. The problematic note is erased from the cantusFirmus array (set to null), and 
+    		 * variable i is then reduced by 1 in the following iteration of the loop, in order to 
+    		 * recompose the note. Helper method listValidRange calls a method called avoidError() 
+    		 * that checks if the proposed note in originalRange meets the description of toAvoid. If
+    		 * so, that proposed note is not included in validRange, so that error will not be made again.
+    		 * 
+    		 * Now, if the size of rangeForNextNote is still 0 (the problematic note was the only option),
+    		 * toAvoid is reset to the Note and index at one index before that of the originally set toAvoid.
+    		 * The same procedure is then followed until rangeForNextNote > 0. Once the dead end problem is
+    		 * resolved and an alternative is finally composed, toAvoid is reset to null, to signify that the
+    		 * note-by-note is not currently experiencing any problems.
+    		 */
     		if(rangeForNextNote.size() == 0) {
-    			//code to manage error
+    			i--; //go to previous note composed...
+    			toAvoid = new CounterpointError(cantusFirmus[i],i);
+    			this.uncomposeNote(i,true);
+    			i--;
     		}
     		else {
+    			//null toAvoid if loop moves pass the error 
+    			if(toAvoid != null)
+    				toAvoid = null;
+    			
     			//select a random note from the arraylist and compose it
     			int n = ((int)Math.random()*rangeForNextNote.size());
     			Note nextNote = rangeForNextNote.get(n);
-    		    cantusFirmus[i] = nextNote;
+    		    this.composeNote(nextNote,i,true);
     		}
     	}
     }
@@ -594,6 +617,12 @@ public class Composition implements NotesAndKeys
     		Note proposed = originalRange.get(i);
     		
     		boolean valid = true;
+    		
+    		//first, make sure conditions of toAvoid are not present
+    		if(toAvoid != null) {
+    			if(!avoidError(proposed,index))
+    				valid = false;
+    		}
     		
         	//method will call helper methods for each specific guideline
             if(!checkStepLeapRatios())
@@ -624,6 +653,9 @@ public class Composition implements NotesAndKeys
             		}
             	}
             }   	
+            
+            if(valid)
+            	validRange.add(proposed);
     	}
     	return validRange;
     }
@@ -749,6 +781,20 @@ public class Composition implements NotesAndKeys
 			return true;
 		return false;
 	}
+    private boolean avoidError(Note proposed,int index) { 
+    	//helper method of listValidRange.
+    	//avoid toAvoid while considering for next note.
+    	if(proposed.equals(toAvoid.getErrorNote()) && index == toAvoid.getIndex())
+    		return false;
+    	return true;
+    }
+    private void uncomposeNote(int index,boolean CF) {
+    	if(CF)
+    		cantusFirmus[index] = null;
+    	else //second line - counterpoint
+    		counterpoint[index] = null;
+    	info.reduceNotesComposed();
+    }
     private void composeCounterpoint(boolean istopLineCF) {
     	if(istopLineCF)
     		this.composeBottomVoice();

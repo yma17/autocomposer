@@ -107,6 +107,9 @@ public class CompositionInfo {
 	public void incrementNotesComposed() {
 		notesComposed++;
 	}
+	public void reduceNotesComposed() {
+		notesComposed--;
+	}
 	public String toString() {
 		//precondition: all instance variables initialized
 		return "leapsSoFar: " + leapsSoFar + "\n"
