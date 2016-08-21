@@ -18,6 +18,7 @@ public class CompositionInfo {
 	private int preFPEndPoint; //note-by-note stops composing here (before FP)
 	private int postFPBeginPoint; //note-by-note begins composing here (after FP)
 	private int postFPEndPoint; //note-by-note stops composing here (after FP)
+	private int notesComposed; //of the current line (once CF is done composing, will be set to 0)
 	
 	public CompositionInfo() {
 		//default values
@@ -100,6 +101,12 @@ public class CompositionInfo {
 	public void setPostFPEndPoint(int location) { //determined in composeCantusFirmus
 		postFPEndPoint = location;
 	}
+	public int getNotesComposed() {
+		return notesComposed;
+	}
+	public void incrementNotesComposed(int number) {
+		notesComposed += number;
+	}
 	public String toString() {
 		//precondition: all instance variables initialized
 		return "leapsSoFar: " + leapsSoFar + "\n"
@@ -113,6 +120,7 @@ public class CompositionInfo {
 				+ "preFPBeginPoint: " + preFPBeginPoint + "\n"
 				+ "preFPEndPoint: " + preFPEndPoint + "\n"
 				+ "postFPBeginPoint: " + postFPBeginPoint + "\n"
-				+ "postFPEndPoint: " + postFPEndPoint + "\n";
+				+ "postFPEndPoint: " + postFPEndPoint + "\n"
+				+ "notesComposed: " + notesComposed;
 	}
 }

@@ -589,7 +589,7 @@ public class Composition implements NotesAndKeys
     		boolean valid = true;
     		
         	//method will call helper methods for each specific guideline
-            if(!checkStepToLeapRatio())
+            if(!checkStepLeapRatios())
             	valid = false;
             if(!checkForTriTones(proposed,previousNotes.get(2)))
             	valid = false;
@@ -617,8 +617,26 @@ public class Composition implements NotesAndKeys
     public void raisePitches() { //to meet guidelines 1 and 2
     	//implement after everything else - not a guideline to be checked during the note-by-note phase. Will be implemented at the end.
     }
-    public boolean checkStepToLeapRatio() { //guideline 4
+    public boolean checkStepLeapRatios() { //guideline 4
+    	//number of composed notes so far must be greater or equal to n for each condition to work
+    	//(n depends on number of measures)
+    	//9 measures - minimum acceptable n = 6.  10, 7.  11, 7.  12, 8.  13, 8. 
+    	int n = info.getNotesComposed();
+    	int steps = info.getStepsSoFar();
+    	int leaps = info.getLeapsSoFar();
+    	int smallerIntervals = info.getSmallerIntervalsSoFar();
+    	int largeLeaps = info.getLargeLeapsSoFar();
     	
+    	if(n >= 2 + (model.getMeasures()/2)) {
+    		if(leaps > steps)
+    			return false;
+    		if((2*largeLeaps) > smallerIntervals)
+    			return false;
+    		
+    		return true; //if both conditions are met
+    	}
+    	else
+    		return true; //condition not counted
     }
     public boolean checkForTriTones(Note proposed,Note other) { //guideline 5
     	
