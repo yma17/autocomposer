@@ -603,25 +603,31 @@ public class Composition implements NotesAndKeys
             if(!checkOppositeMotion(previousNotes.get(0),previousNotes.get(1),previousNotes.get(2),proposed))
             	valid = false;
             if(previousNotes.get(0) != null && previousNotes.get(1) != null) { //if the entire previousNotes array is valid (get(2) is always valid(first note tonic))
-            	if(!checkOppositeMotionFromAhead(previousNotes))
+            	if(!checkOppositeMotionFromAhead(previousNotes,proposed))
             		valid = false;
-            	if(!checkTriToneStress(previousNotes))
+            	if(!checkTriToneStress(previousNotes,proposed))
             		valid = false;
             }
-            if(futureNotes.get(0) != null) {
-            	if(!checkForTriTones(proposed,futureNotes.get(0)))
-            		valid = false;
-            	if(!checkOppositeMotion(previousNotes.get(1),previousNotes.get(2),proposed,futureNotes.get(1)))
-            		valid = false;
-            	if(futureNotes.get(1) != null && futureNotes.get(2) != null) { //if the entire futureNotes array is valid
-            		if(!checkOppositeMotionFromBehind(futureNotes))
+            if(futureNotes.get(0) != null) { //note exists in index directly ahead
+            	if(i == cantusFirmus.length-2) { //2nd to last note
+            		if(!checkStepFromTonic(proposed))
             			valid = false;
+            	}
+            	else { //just before notes from pre-determined composition
+            		if(!checkForTriTones(proposed,futureNotes.get(0)))
+            			valid = false;
+            		if(!checkOppositeMotion(previousNotes.get(1),previousNotes.get(2),proposed,futureNotes.get(1)))
+            			valid = false;
+            		if(futureNotes.get(1) != null) { //if the entire futureNotes array is valid
+            			if(!checkOppositeMotionFromBehind(futureNotes,proposed))
+            				valid = false;
+            		}
             	}
             }   	
     	}
     	return validRange;
     }
-    public void raisePitches() { //to meet guidelines 1 and 2
+	public void raisePitches() { //to meet guidelines 1 and 2
     	//implement after everything else - not a guideline to be checked during the note-by-note phase. Will be implemented at the end.
     }
     public boolean checkStepLeapRatios() { //guideline 4
@@ -646,7 +652,9 @@ public class Composition implements NotesAndKeys
     		return true; //condition not counted
     }
     public boolean checkForTriTones(Note proposed,Note other) { //guideline 5
-    	
+    	if(Math.abs(other.midiValue()-proposed.midiValue()) == 6)
+    		return false;
+    	return true;
     }    
     public boolean checkOppositeMotion(Note first,Note second,Note third,Note fourth) { //guideline 7
     	//precondition: all parameters are valid Note objects
@@ -669,16 +677,78 @@ public class Composition implements NotesAndKeys
     			return false;
     	}
     }
-    public boolean checkOppositeMotionFromBehind(ArrayList<Note> nextNotes) { //guideline 8/9
+    public boolean checkOppositeMotionFromBehind(ArrayList<Note> nextNotes,Note proposed) { //guideline 8/9
+    	//preconditions: preFPContourType is 1 or 2.
+    				//   nextNotes.size() is either 2 or 3
+    				//   just before pre-determined composition
     	
+		//interval between preFP and FP is greater than P5
+    	if(nextNotes.size() == 2) {
+    		if(nextNotes.get(1).getRelativePitch() - nextNotes.get(0).getRelativePitch() > 4) {
+    			if(proposed.getRelativePitch() < nextNotes.get(0).getRelativePitch())
+    				return false;
+    		}
+    	}
+    	else { //nextNotes.size() == 3
+    		if(nextNotes.get(2).getRelativePitch() - nextNotes.get(0).getRelativePitch() >= 4) {
+    			if(proposed.getRelativePitch() < nextNotes.get(0).getRelativePitch())
+    				return false;
+    		}
+    	}
+    	return true;
     }
-    public boolean checkOppositeMotionFromAhead(ArrayList<Note> lastNotes) { //guideline 8/9
+    public boolean checkOppositeMotionFromAhead(ArrayList<Note> lastNotes,Note proposed) { //guideline 8/9
+    	//preconditions: preFPContourType is 1 or 2.
+					//   lastNotes.size() is 3
+    				//   just after pre-determined composition
     	
+    	//if special structure or interval between preFP and FP greater than P5...
+    	if(lastNotes.get(2).getRelativePitch()-1 == lastNotes.get(1).getRelativePitch()) //additional note
+    		return false;
+    	if(lastNotes.get(2).getRelativePitch()-2 == lastNotes.get(1).getRelativePitch()
+    		&& lastNotes.get(1).getRelativePitch()-2 == lastNotes.get(0).getRelativePitch()) //root position triad
+    		return false;
+    	if(lastNotes.get(2).getRelativePitch()-2 == lastNotes.get(1).getRelativePitch()
+        		&& lastNotes.get(1).getRelativePitch()-3 == lastNotes.get(0).getRelativePitch()) //first inversion triad
+        		return false;
+    	if(lastNotes.get(2).getRelativePitch()-3 == lastNotes.get(1).getRelativePitch()
+        		&& lastNotes.get(1).getRelativePitch()-2 == lastNotes.get(0).getRelativePitch()) //second inversion triad
+        		return false;
+    	if(lastNotes.get(2).getRelativePitch()-3 == lastNotes.get(1).getRelativePitch()
+        		&& lastNotes.get(1).getRelativePitch()-4 == lastNotes.get(0).getRelativePitch()) //5th+4th
+        		return false;
+    	if(lastNotes.get(2).getRelativePitch()-lastNotes.get(1).getRelativePitch() > 4) //interval larger than 5th
+    		return false;
+    	    	
+    	return true;
     }
-    public boolean checkTriToneStress(ArrayList<Note> lastNotes) { //guideline 10
+    public boolean checkTriToneStress(ArrayList<Note> lastNotes,Note proposed) { //guideline 10
+    	//precondition: lastNotes.size() is 3.
+    	boolean linear = false; //default value
+    	if(lastNotes.get(1).getRelativePitch()+3 == proposed.getRelativePitch()) {
+    		if(lastNotes.get(1).getRelativePitch()+1 == lastNotes.get(2).getRelativePitch())
+    			linear = true;
+    		else if(lastNotes.get(1).getRelativePitch()+2 == lastNotes.get(2).getRelativePitch())
+    			linear = true;
+    	}
+    	if(lastNotes.get(0).getRelativePitch()+1 == lastNotes.get(1).getRelativePitch()
+    			&& lastNotes.get(1).getRelativePitch()+1 == lastNotes.get(2).getRelativePitch()
+    			&& lastNotes.get(2).getRelativePitch()+1 == proposed.getRelativePitch())
+    		linear = true;
     	
+    	if(linear) { //notes need to be leading in a single direction
+    		if(Math.abs(lastNotes.get(1).midiValue()-proposed.midiValue()) == 6)
+    			return false;
+    		else if(Math.abs(lastNotes.get(0).midiValue()-proposed.midiValue()) == 6)
+    			return false;
+    	}
+    	return true;
     }
-    
+    private boolean checkStepFromTonic(Note proposed) { //guideline 11
+		if(Math.abs(proposed.getRelativePitch()-cantusFirmus[0].getRelativePitch()) == 1)
+			return true;
+		return false;
+	}
     private void composeCounterpoint(boolean istopLineCF) {
     	if(istopLineCF)
     		this.composeBottomVoice();
