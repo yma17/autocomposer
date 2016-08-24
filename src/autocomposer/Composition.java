@@ -200,6 +200,7 @@ public class Composition implements NotesAndKeys
     	//compose empty section before focal point
     	//call note-by-note composition method
     	this.composeNoteByNote(true);
+    	System.out.println("first half done"); //for testing
     	
     	//compose empty sectionafter focal point
     	//call note-by-note composition method
@@ -552,6 +553,8 @@ public class Composition implements NotesAndKeys
     	
     	//composition loop - notes composed linearly from begin to end
     	for(int i = begin; i <= end; i++) {
+    		System.out.println(i);
+    		
     		ArrayList<Note> rangeForNextNote = this.listRange(cantusFirmus[i-1]); //raw range
     		
     		//initialize previousNotes and futureNotes
@@ -561,14 +564,12 @@ public class Composition implements NotesAndKeys
     			if(x >= 0) //to avoid ArrayOutOfBoundsException, to manage first 3 notes of the CF
     				previousNotes.add(0,cantusFirmus[x]);
     		}
-    		System.out.println(previousNotes.size()); //for testing
     		//futureNotes count notes from current index, forwards (e.g. 8th note,9th note,10th note...)
     		ArrayList<Note> futureNotes = new ArrayList<Note>();
     		for(int x = i+1; x <= i+3; x++) { //<=3 notes
     			if(x <= cantusFirmus.length-1)
     				futureNotes.add(cantusFirmus[x]);
     		}
-    		System.out.println(futureNotes.size()); //for testing
     		
     		rangeForNextNote = this.listValidRange(rangeForNextNote, i, previousNotes, futureNotes);
     		
@@ -602,10 +603,27 @@ public class Composition implements NotesAndKeys
     			int n = ((int)Math.random()*rangeForNextNote.size());
     			Note nextNote = rangeForNextNote.get(n);
     		    this.composeNote(nextNote,i,true);
+    		    
+    		    //update steps,leaps,smallerIntervals,largeLeaps in CompositionInfo
+    		    this.updateStepLeapInfo(nextNote,previousNotes.get(0));
+    		    if(futureNotes.get(0) != null)
+    		    	this.updateStepLeapInfo(nextNote, futureNotes.get(0));
     		}
     	}
     }
-    //create helper methods as needed
+    private void updateStepLeapInfo(Note justComposed, Note other) { //executed at the end of each composed note in composeNoteByNote()
+    	int intervalWithNoteBefore = Math.abs(justComposed.getRelativePitch()-other.getRelativePitch());
+    	if(intervalWithNoteBefore == 1) //step
+    		info.incrementStepsSoFar(1);
+    	else //leap
+    		info.incrementLeapsSoFar(1);
+    	
+    	if(intervalWithNoteBefore <= 2) //smaller interval
+    		info.incrementSmallerIntervalsSoFar(1);
+    	else //large leap
+    		info.incrementLargeLeapsSoFar(1);
+	}
+	//create helper methods as needed
     public ArrayList<Note> listRange(Note previous) { //lists raw range from fifth below to fifth above
     	ArrayList<Note> range = new ArrayList<Note>();
     	for(int i = -4; i <= 4; i++) {
