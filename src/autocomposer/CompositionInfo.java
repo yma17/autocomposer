@@ -29,29 +29,59 @@ public class CompositionInfo {
 		maxPitch = Integer.MAX_VALUE;
 		minPitch = Integer.MIN_VALUE;
 	}
+	public void updateIntervalInfo(Note justComposed,Note noteBefore,Note noteAfter) { 
+		//executed each time a note is composed (except for first and last notes of each line.)
+		//Updates leapsSoFar,stepsSoFar,largeLeapsSoFar,smallerIntervalsSoFar.
+		if(noteBefore != null) {
+			int intervalWithNoteBefore = Math.abs(justComposed.getRelativePitch()-noteBefore.getRelativePitch());
+			if(intervalWithNoteBefore == 1) //step
+				stepsSoFar++;
+			else //leap
+				leapsSoFar++;
+			
+			if(intervalWithNoteBefore <= 2) //smaller interval
+				smallerIntervalsSoFar++;
+			else //large leaps
+				largeLeapsSoFar++;
+		}
+		if(noteAfter != null) { //same code with noteAfter
+			int intervalWithNoteAfter = Math.abs(justComposed.getRelativePitch()-noteAfter.getRelativePitch());
+			if(intervalWithNoteAfter == 1)
+				stepsSoFar++;
+			else
+				leapsSoFar++;
+			
+			if(intervalWithNoteAfter <= 2)
+				smallerIntervalsSoFar++;
+			else
+				largeLeapsSoFar++;
+		}
+	}
+	public void updateIntervalInfo(Note justRemoved,Note noteBefore) { //executes each time a note is removed.
+		//interval between justRemoved and noteBefore (Note just before justRemoved) is erased, so info must be updated.
+		//precondition: noteBefore has been composed, so it is not null.
+		int intervalWithNoteBefore = Math.abs(justRemoved.getRelativePitch()-noteBefore.getRelativePitch());
+		if(intervalWithNoteBefore == 1) //step
+			stepsSoFar--;
+		else //leap
+			leapsSoFar--;
+		
+		if(intervalWithNoteBefore <= 2) //smaller interval
+			smallerIntervalsSoFar--;
+		else //large leaps
+			largeLeapsSoFar--;
+	}
 	public int getLeapsSoFar() {
 		return leapsSoFar;
-	}
-	public void incrementLeapsSoFar(int number) {
-		leapsSoFar += number;
 	}
 	public int getStepsSoFar() {
 		return stepsSoFar;
 	}
-	public void incrementStepsSoFar(int number) {
-		stepsSoFar += number;
-	}
 	public int getLargeLeapsSoFar() {
 		return largeLeapsSoFar;
 	}
-	public void incrementLargeLeapsSoFar(int number) {
-		largeLeapsSoFar += number;
-	}
 	public int getSmallerIntervalsSoFar() {
 		return smallerIntervalsSoFar;
-	}
-	public void incrementSmallerIntervalsSoFar(int number) {
-		smallerIntervalsSoFar += number;
 	}
 	public int getMaxPitch() {
 		return maxPitch;

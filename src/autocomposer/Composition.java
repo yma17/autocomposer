@@ -92,10 +92,6 @@ public class Composition implements NotesAndKeys
     					specialStructureUsed = true; //to end composition of pre-determined notes
     					
     					//update info
-    					info.incrementLeapsSoFar(1);
-    					info.incrementLargeLeapsSoFar(1); 
-    					info.incrementStepsSoFar(1);
-    					info.incrementSmallerIntervalsSoFar(1);
     					info.setPreFPEndPoint(focalPoint-3); //3 notes before focal pt
     				}
     				//if no legal intervals, don't employ any special structures
@@ -111,8 +107,6 @@ public class Composition implements NotesAndKeys
         				specialStructureUsed = true;
         				
     					//update info
-        				info.incrementLargeLeapsSoFar(2);
-        				info.incrementLeapsSoFar(2);
         				info.setPreFPEndPoint(focalPoint-3);
         			}
         		}
@@ -151,14 +145,7 @@ public class Composition implements NotesAndKeys
             				specialStructureUsed = true;
             				
             				//update info
-            				info.incrementLeapsSoFar(2);
             				info.setPreFPEndPoint(focalPoint-3);
-            				if(position.indexOf("inversion") >= 0) { //is an inversion triad
-            					info.incrementLargeLeapsSoFar(1);
-            					info.incrementSmallerIntervalsSoFar(1);
-            				}
-            				else //root position triad
-            					info.incrementSmallerIntervalsSoFar(2);
             			}
             		}
         		}
@@ -174,8 +161,6 @@ public class Composition implements NotesAndKeys
                 this.composeNote(focal, focalPoint, true);
                
                 //update info
-                info.incrementLargeLeapsSoFar(1);
-                info.incrementLeapsSoFar(1);
                 info.setMaxPitch(focal.getRelativePitch());
 				info.setPreFPEndPoint(focalPoint-2);
     		}
@@ -259,6 +244,13 @@ public class Composition implements NotesAndKeys
     	else //second line - counterpoint
     		counterpoint[index] = toBeComposed;
     	info.incrementNotesComposed();
+    	
+    	if(index > 0 && index < cantusFirmus.length - 1) { //will execute for every note except for first and last note of each line
+    		if(CF)
+    			info.updateIntervalInfo(toBeComposed, cantusFirmus[index-1], cantusFirmus[index+1]);
+    		else
+    			info.updateIntervalInfo(toBeComposed, counterpoint[index-1], counterpoint[index+1]);
+    	}
     }
     private int determineFocalPointLocation() //Determines the index of the focal point in the CF.
     {
@@ -591,7 +583,7 @@ public class Composition implements NotesAndKeys
     		if(rangeForNextNote.size() == 0) {
     			i--; //go to previous note composed...
     			toAvoid = new CounterpointError(cantusFirmus[i],i);
-    			this.uncomposeNote(i,true);
+    			this.uncomposeNote(cantusFirmus[i],i,true);
     			i--;
     		}
     		else {
@@ -603,26 +595,11 @@ public class Composition implements NotesAndKeys
     			int n = ((int)Math.random()*rangeForNextNote.size());
     			Note nextNote = rangeForNextNote.get(n);
     		    this.composeNote(nextNote,i,true);
-    		    
-    		    //update steps,leaps,smallerIntervals,largeLeaps in CompositionInfo
-    		    this.updateStepLeapInfo(nextNote,previousNotes.get(0));
-    		    if(futureNotes.get(0) != null)
-    		    	this.updateStepLeapInfo(nextNote, futureNotes.get(0));
+        		System.out.println(i); //for testing
+
     		}
     	}
     }
-    private void updateStepLeapInfo(Note justComposed, Note other) { //executed at the end of each composed note in composeNoteByNote()
-    	int intervalWithNoteBefore = Math.abs(justComposed.getRelativePitch()-other.getRelativePitch());
-    	if(intervalWithNoteBefore == 1) //step
-    		info.incrementStepsSoFar(1);
-    	else //leap
-    		info.incrementLeapsSoFar(1);
-    	
-    	if(intervalWithNoteBefore <= 2) //smaller interval
-    		info.incrementSmallerIntervalsSoFar(1);
-    	else //large leap
-    		info.incrementLargeLeapsSoFar(1);
-	}
 	//create helper methods as needed
     public ArrayList<Note> listRange(Note previous) { //lists raw range from fifth below to fifth above
     	ArrayList<Note> range = new ArrayList<Note>();
@@ -652,7 +629,7 @@ public class Composition implements NotesAndKeys
             	valid = false;
             if(!checkForTriTones(proposed,previousNotes.get(0)))
             	valid = false;
-            if(previousNotes.size() == 3) { //if the entire previousNotes arraylist is valid (get(0) is always valid(first note tonic))
+            if(previousNotes.size() == 3 && previousNotes.get(2) != null) { //if the entire previousNotes arraylist is valid (get(0) is always valid(first note tonic))
             	if(!checkOppositeMotion(previousNotes.get(2),previousNotes.get(1),previousNotes.get(0),proposed))
                 	valid = false;
             	if(!checkOppositeMotionFromAhead(previousNotes,proposed))
@@ -670,7 +647,7 @@ public class Composition implements NotesAndKeys
             			valid = false;
             		if(!checkForTriTones(proposed,futureNotes.get(0)))
             			valid = false;
-            		if(!checkOppositeMotion(previousNotes.get(1),previousNotes.get(0),proposed,futureNotes.get(1)))
+            		if(!checkOppositeMotion(previousNotes.get(1),previousNotes.get(0),proposed,futureNotes.get(0)))
             			valid = false;
             		if(futureNotes.size() >= 2 && info.getPreFPContourType() <= 2) { //if the entire futureNotes array is valid
             			if(!checkOppositeMotionFromBehind(futureNotes,proposed))
@@ -844,12 +821,13 @@ public class Composition implements NotesAndKeys
     		return false;
     	return true;
     }
-    private void uncomposeNote(int index,boolean CF) {
+    private void uncomposeNote(Note uncomposed,int index,boolean CF) { //helper method of composeNoteByNote().
     	if(CF)
     		cantusFirmus[index] = null;
     	else //second line - counterpoint
     		counterpoint[index] = null;
     	info.reduceNotesComposed();
+    	info.updateIntervalInfo(uncomposed, cantusFirmus[index-1]);
     }
     private void composeCounterpoint(boolean istopLineCF) {
     	if(istopLineCF)
