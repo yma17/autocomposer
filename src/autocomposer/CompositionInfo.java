@@ -29,59 +29,65 @@ public class CompositionInfo {
 		maxPitch = Integer.MAX_VALUE;
 		minPitch = Integer.MIN_VALUE;
 	}
-	public void updateIntervalInfo(Note justComposed,Note noteBefore,Note noteAfter) { 
-		//executed each time a note is composed (except for first and last notes of each line.)
+	public void updateIntervalInfo(Note note,Note noteBefore,Note noteAfter,boolean composing) { 
+		//composing = true - note has just been composed
+		//composing = false - note has just been removed
 		//Updates leapsSoFar,stepsSoFar,largeLeapsSoFar,smallerIntervalsSoFar.
+		
+		int value; //amount to increase variables by
+		if(composing)
+			value = 1; //increment by 1
+		else
+			value = -1; //reduce by 1
+		
 		if(noteBefore != null) {
-			int intervalWithNoteBefore = Math.abs(justComposed.getRelativePitch()-noteBefore.getRelativePitch());
+			int intervalWithNoteBefore = Math.abs(note.getRelativePitch()-noteBefore.getRelativePitch());
 			if(intervalWithNoteBefore == 1) //step
-				stepsSoFar++;
+				stepsSoFar += value;
 			else //leap
-				leapsSoFar++;
+				leapsSoFar += value;
 			
 			if(intervalWithNoteBefore <= 2) //smaller interval
-				smallerIntervalsSoFar++;
+				smallerIntervalsSoFar += value;
 			else //large leaps
-				largeLeapsSoFar++;
+				largeLeapsSoFar += value;
 		}
 		if(noteAfter != null) { //same code with noteAfter
-			int intervalWithNoteAfter = Math.abs(justComposed.getRelativePitch()-noteAfter.getRelativePitch());
+			int intervalWithNoteAfter = Math.abs(note.getRelativePitch()-noteAfter.getRelativePitch());
 			if(intervalWithNoteAfter == 1)
-				stepsSoFar++;
+				stepsSoFar += value;
 			else
-				leapsSoFar++;
+				leapsSoFar += value;
 			
 			if(intervalWithNoteAfter <= 2)
-				smallerIntervalsSoFar++;
+				smallerIntervalsSoFar += value;
 			else
-				largeLeapsSoFar++;
+				largeLeapsSoFar += value;
 		}
-	}
-	public void updateIntervalInfo(Note justRemoved,Note noteBefore) { //executes each time a note is removed.
-		//interval between justRemoved and noteBefore (Note just before justRemoved) is erased, so info must be updated.
-		//precondition: noteBefore has been composed, so it is not null.
-		int intervalWithNoteBefore = Math.abs(justRemoved.getRelativePitch()-noteBefore.getRelativePitch());
-		if(intervalWithNoteBefore == 1) //step
-			stepsSoFar--;
-		else //leap
-			leapsSoFar--;
-		
-		if(intervalWithNoteBefore <= 2) //smaller interval
-			smallerIntervalsSoFar--;
-		else //large leaps
-			largeLeapsSoFar--;
 	}
 	public int getLeapsSoFar() {
 		return leapsSoFar;
 	}
+	public void setLeapsSoFar(int i) { //for testing
+		leapsSoFar = i;
+	}
 	public int getStepsSoFar() {
 		return stepsSoFar;
+	}
+	public void setStepsSoFar(int i) { //for testing
+		stepsSoFar = i;
 	}
 	public int getLargeLeapsSoFar() {
 		return largeLeapsSoFar;
 	}
+	public void setLargeLeapsSoFar(int i) { //for testing
+		largeLeapsSoFar = i;
+	}
 	public int getSmallerIntervalsSoFar() {
 		return smallerIntervalsSoFar;
+	}
+	public void setSmallerIntervalsSoFar(int i) { //for testing
+		smallerIntervalsSoFar = i;
 	}
 	public int getMaxPitch() {
 		return maxPitch;

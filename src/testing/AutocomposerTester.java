@@ -14,7 +14,8 @@ public class AutocomposerTester implements NotesAndKeys
 {
 
 	public static void main(String[] args)
-	{		
+	{	
+		//testing composition of counterpoint
 		
 		/*
 		//testing all cases in composeCantusFirmus - works (no-args Model constructor)
@@ -33,9 +34,10 @@ public class AutocomposerTester implements NotesAndKeys
 
 		//testing all cases in composeCantusFirmus - works (args Model constructor)
 		
-		Model m = new Model("C","Ionian",9);
+		Model m = new Model("F","Lydian",13);
 		Composition c = new Composition(m);
 		c.composeCantusFirmus();
+		//c.comp();
 		System.out.println(c.info.toString());
 		Note[] cantusFirmus = c.getCantusFirmus();
 		for(int i = 0; i < cantusFirmus.length; i++) {
@@ -43,6 +45,7 @@ public class AutocomposerTester implements NotesAndKeys
         		System.out.println(i + "  " + cantusFirmus[i].toString());
         	}
         }
+        
         
         
 		

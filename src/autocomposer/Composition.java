@@ -21,13 +21,14 @@ public class Composition implements NotesAndKeys
     
     public Model model; //contains all intrinsic information (e.g. key, mode, etc.) of the music to be composed. See Model class for specifics.
     public CompositionInfo info; //contains information to refer to throughout the composition process. See CompositionInfo class for specifics.
-    public CounterpointError toAvoid = null;
+    public ErrorNoteList toAvoid; //list of proposed notes to avoid while composing the current index, that leads to a dead end. (note: clears when index changes)
     public Composition(Model m)
     {
     	cantusFirmus = new Note[m.getMeasures()];
     	counterpoint = new Note[m.getMeasures()];
         this.model = m;
         info = new CompositionInfo();
+        toAvoid = new ErrorNoteList();
     }
     public void compose() //composes the 2-voice counterpoint
     {
@@ -185,7 +186,6 @@ public class Composition implements NotesAndKeys
     	//compose empty section before focal point
     	//call note-by-note composition method
     	this.composeNoteByNote(true);
-    	System.out.println("first half done"); //for testing
     	
     	//compose empty sectionafter focal point
     	//call note-by-note composition method
@@ -247,9 +247,9 @@ public class Composition implements NotesAndKeys
     	
     	if(index > 0 && index < cantusFirmus.length - 1) { //will execute for every note except for first and last note of each line
     		if(CF)
-    			info.updateIntervalInfo(toBeComposed, cantusFirmus[index-1], cantusFirmus[index+1]);
+    			info.updateIntervalInfo(toBeComposed, cantusFirmus[index-1], cantusFirmus[index+1], true);
     		else
-    			info.updateIntervalInfo(toBeComposed, counterpoint[index-1], counterpoint[index+1]);
+    			info.updateIntervalInfo(toBeComposed, counterpoint[index-1], counterpoint[index+1], true);
     	}
     }
     private int determineFocalPointLocation() //Determines the index of the focal point in the CF.
@@ -545,16 +545,16 @@ public class Composition implements NotesAndKeys
     	
     	//composition loop - notes composed linearly from begin to end
     	for(int i = begin; i <= end; i++) {
-    		System.out.println(i);
+    		System.out.println("i: " + i); //for testing
     		
     		ArrayList<Note> rangeForNextNote = this.listRange(cantusFirmus[i-1]); //raw range
     		
     		//initialize previousNotes and futureNotes
     		//previousNotes count notes from current index, backwards (e.g. 6th note,5th note,4th note...)
     		ArrayList<Note> previousNotes = new ArrayList<Note>();
-    		for(int x = i-1; x >= i-3; x--) { //<=3 notes
+    		for(int x = i-1; x >= i-4; x--) { //<=4 notes
     			if(x >= 0) //to avoid ArrayOutOfBoundsException, to manage first 3 notes of the CF
-    				previousNotes.add(0,cantusFirmus[x]);
+    				previousNotes.add(cantusFirmus[x]);
     		}
     		//futureNotes count notes from current index, forwards (e.g. 8th note,9th note,10th note...)
     		ArrayList<Note> futureNotes = new ArrayList<Note>();
@@ -564,7 +564,7 @@ public class Composition implements NotesAndKeys
     		}
     		
     		rangeForNextNote = this.listValidRange(rangeForNextNote, i, previousNotes, futureNotes);
-    		
+              		
     		/* procedure for managing errors/dead ends.
     		 * Once a dead end for valid next notes is reached, a CounterpointError object is created
     		 * with the previous note composed and the previous index, and is set to instance variable
@@ -580,105 +580,172 @@ public class Composition implements NotesAndKeys
     		 * resolved and an alternative is finally composed, toAvoid is reset to null, to signify that the
     		 * note-by-note is not currently experiencing any problems.
     		 */
-    		if(rangeForNextNote.size() == 0) {
-    			i--; //go to previous note composed...
-    			toAvoid = new CounterpointError(cantusFirmus[i],i);
+
+    		//TODO
+    		
+    		System.out.println("rangeForNextNote: " + rangeForNextNote.size());
+    		
+    		
+    		if(rangeForNextNote.size() == 0 && i > begin) {
+    			
+    			System.out.println("error"); //for testing
+    			i--; //go back to the previous index
+    			//if there's something already in toAvoid, clear it
+    			if(toAvoid.getIndex() == -1)
+    				toAvoid.setIndex(i);
+    			if(toAvoid.getMaxSize() == toAvoid.getList().size()) {
+    				toAvoid.setMaxSize(-1);
+    				toAvoid.clearNoteList();
+    				toAvoid.setIndex(i);
+    			}
+    			toAvoid.addNote(cantusFirmus[i]);
+    			//System.out.println(cantusFirmus[i].toString()); //for testing
     			this.uncomposeNote(cantusFirmus[i],i,true);
-    			i--;
+    			i--; //to compensate for i++ in the loop
+    			
+    		}
+    		else if(rangeForNextNote.size() == 0 && i == begin) { //for testing
+    			System.out.println("break");
+    			break;
     		}
     		else {
-    			//null toAvoid if loop moves pass the error 
-    			if(toAvoid != null)
-    				toAvoid = null;
-    			
     			//select a random note from the arraylist and compose it
-    			int n = ((int)Math.random()*rangeForNextNote.size());
+    			
+    			//System.out.println("toAvoid length: " + toAvoid.getList().size());
+    			//System.out.println("range length: " + rangeForNextNote.size());
+    			
+    			double d = Math.random();
+    			int n = (int)(d*rangeForNextNote.size());
     			Note nextNote = rangeForNextNote.get(n);
-    		    this.composeNote(nextNote,i,true);
-        		System.out.println(i); //for testing
-
+    			this.composeNote(nextNote,i,true);
+    			
+    			//System.out.println(nextNote.toString());
+    			
+    			//if composition of this note resolves the dead end problem, clear toAvoid.getList
+    			//and set index back to default to signify that error has been overcome
+    			if(i == toAvoid.getIndex()+1) {
+    				//System.out.println("resolved"); //for testing
+    				toAvoid.clearNoteList();
+    				toAvoid.setIndex(-1);
+    				toAvoid.setMaxSize(-1);
+    			}
     		}
     	}
     }
 	//create helper methods as needed
     public ArrayList<Note> listRange(Note previous) { //lists raw range from fifth below to fifth above
     	ArrayList<Note> range = new ArrayList<Note>();
-    	for(int i = -4; i <= 4; i++) {
-    		if(i != 0) //no repeated notes - guideline 3
+    	for(int i = -4; i <= 4; i++) { //i can't be 0- no repeated notes- guideline 3
+    		if(i != 0)
     			range.add(new Note(cantusFirmus[0],previous.getRelativePitch()+i,model));
     	}
     	return range;
     }
     public ArrayList<Note> listValidRange(ArrayList<Note> originalRange,int index,ArrayList<Note> previousNotes,ArrayList<Note> futureNotes) {
     	ArrayList<Note> validRange = new ArrayList<Note>();
+    	
     	for(int i = 0; i < originalRange.size(); i++) {
     		Note proposed = originalRange.get(i);
     		
-    		boolean valid = true;
-    		
-    		//first, make sure conditions of toAvoid are not present
-    		if(toAvoid != null) {
-    			if(!avoidError(proposed,index))
-    				valid = false;
-    		}
-    		
-        	//method will call helper methods for each specific guideline
-    		if(!checkWithinMinMaxPitches(proposed))
-    			valid = false;
-            if(!checkStepLeapRatios(proposed,previousNotes.get(0),index))
-            	valid = false;
-            if(!checkForTriTones(proposed,previousNotes.get(0)))
-            	valid = false;
-            if(previousNotes.size() == 3 && previousNotes.get(2) != null) { //if the entire previousNotes arraylist is valid (get(0) is always valid(first note tonic))
-            	if(!checkOppositeMotion(previousNotes.get(2),previousNotes.get(1),previousNotes.get(0),proposed))
-                	valid = false;
-            	if(!checkOppositeMotionFromAhead(previousNotes,proposed))
-            		valid = false;
-            	if(!checkTriToneStress(previousNotes,proposed))
-            		valid = false;
-            }
-            if(futureNotes.get(0) != null) { //note exists in index directly ahead
-            	if(index == cantusFirmus.length-2) { //2nd to last note
-            		if(!checkStepFromTonic(proposed))
-            			valid = false;
-            	}
-            	else { //just before notes from pre-determined composition
-            		if(!checkStepLeapRatios(proposed,futureNotes.get(0),index))
-            			valid = false;
-            		if(!checkForTriTones(proposed,futureNotes.get(0)))
-            			valid = false;
-            		if(!checkOppositeMotion(previousNotes.get(1),previousNotes.get(0),proposed,futureNotes.get(0)))
-            			valid = false;
-            		if(futureNotes.size() >= 2 && info.getPreFPContourType() <= 2) { //if the entire futureNotes array is valid
-            			if(!checkOppositeMotionFromBehind(futureNotes,proposed))
-            				valid = false;
-            		}
-            	}
-            }   	
+    		boolean valid = this.checkGuidelines(proposed, previousNotes, futureNotes, index);
             
             if(valid)
             	validRange.add(proposed);
     	}
+    	
+    	if(toAvoid.getMaxSize() == -1 && toAvoid.getList().size() == 1) //hasn't been set yet
+    		toAvoid.setMaxSize(validRange.size());
+    	
+    	if(toAvoid.getList().size() > 0 && index == toAvoid.getIndex())
+    		validRange = this.eliminateErrors(validRange);
+    	
     	return validRange;
+    }
+    public boolean checkGuidelines(Note proposed,ArrayList<Note> previousNotes,ArrayList<Note> futureNotes,int index) {
+    	//method will call helper methods for each specific guideline
+		if(!checkWithinMinMaxPitches(proposed))
+			return false;
+        if(!checkForTriTones(proposed,previousNotes.get(0)))
+        	return false;
+        if(previousNotes.size() >= 3 && previousNotes.get(2) != null) { //if the entire previousNotes arraylist is valid (get(0) is always valid(first note tonic))
+        	if(!checkOppositeMotion(previousNotes.get(2),previousNotes.get(1),previousNotes.get(0),proposed))
+            	return false;
+        	
+            if(previousNotes.size() == 4) {
+            	//if(!checkTriToneStress(previousNotes.get(3),previousNotes.get(2),previousNotes.get(1),previousNotes.get(0)));
+            		//return false;
+            }
+            else { //size = 3
+            	//if(!checkTriToneStress(null,previousNotes.get(2),previousNotes.get(1),previousNotes.get(0)))
+            		//return false;
+            }
+            
+        }
+        if(futureNotes.get(0) != null) { //note exists in index directly ahead
+        	if(!this.checkIdenticalNotes(proposed,futureNotes.get(0)))
+        		return false;
+        	
+        	//if(!checkTriToneStress(previousNotes.get(1),previousNotes.get(0),proposed,futureNotes.get(0)))
+        		//return false;
+        	
+        	if(index == cantusFirmus.length-2) { //2nd to last note
+        		if(!checkStepFromTonic(proposed))
+        			return false;
+        	}
+        	else { //just before notes from pre-determined composition (index = preFPEndPoint)
+        		if(!checkForTriTones(proposed,futureNotes.get(0)))
+        			return false;
+        		if(!checkOppositeMotion(previousNotes.get(1),previousNotes.get(0),proposed,futureNotes.get(0)))
+        			return false;
+        		if(futureNotes.get(1) != null && futureNotes.get(2) != null && info.getPreFPContourType() <= 2) { //if the entire futureNotes array is valid
+        			if(!checkOppositeMotionFromBehind(futureNotes,proposed))
+        				return false;
+        		}
+        	}
+        }   	
+        
+        //check step/leap ratios
+        if(!checkStepLeapRatios(proposed,previousNotes.get(0),index))
+      		return false;
+        if(index == info.getPreFPEndPoint()) {
+        	if(!checkStepLeapRatios(previousNotes.get(0),proposed,futureNotes.get(0)))
+    			return false;
+        }
+        
+        return true;
+    	
+    }
+    public ArrayList<Note> eliminateErrors(ArrayList<Note> checkedRange) {
+    	ArrayList<Note> errorFreeRange = new ArrayList<Note>();
+    	for(int i = 0; i < checkedRange.size(); i++) {
+    		boolean add = true;
+    		for(int j = 0; j < toAvoid.getList().size(); j++) {
+    			if(checkedRange.get(i).midiValue() == toAvoid.getList().get(j).midiValue())
+    				add = false;
+    		}
+    		if(add)
+    			errorFreeRange.add(checkedRange.get(i));
+    	}
+    	return errorFreeRange;
     }
 	public void raisePitches() { //to meet guidelines 1 and 2
     	//implement after everything else - not a guideline to be checked during the note-by-note phase. Will be implemented at the end.
     }
-    public boolean checkStepLeapRatios(Note proposed,Note other,int index) { //guideline 4
-    	//Note other = the already composed note before or after the proposed note that forms the interval
-    	int steps = info.getStepsSoFar();
+    public boolean checkStepLeapRatios(Note proposed,Note otherNote,int index) { //guideline 4
+    	//one new interval created here - with otherNote
+       	int steps = info.getStepsSoFar();
     	int leaps = info.getLeapsSoFar();
     	int smallerIntervals = info.getSmallerIntervalsSoFar();
     	int largeLeaps = info.getLargeLeapsSoFar();
     	
-    	int interval = Math.abs(other.getRelativePitch()-proposed.getRelativePitch()); //interval between the 2 notes
+    	int interval = Math.abs(otherNote.getRelativePitch()-proposed.getRelativePitch()); //interval between the 2 notes
     	
     	if(index < info.getFocalPoint()) { //before the focal point - looser rules
-    		if(Math.abs(interval) > 1) { //leap (3rd or larger)
-    		    if(leaps > ((info.getFocalPoint()+1)/2)+1)
+    		if(interval >= 2) { //leap (3rd or larger)
+    		    if(leaps >= ((info.getFocalPoint()+1)/2)+1)
         		    return false;
     		}
-	    	if(Math.abs(interval) > 2) { //large leap (4th or larger)
+	    	if(interval >= 3) { //large leap (4th or larger)
 	    		if(largeLeaps >= ((info.getFocalPoint()+1)/3))
 	    			return false;
 	    	}
@@ -687,16 +754,42 @@ public class Composition implements NotesAndKeys
     		//step/leap rules don't apply to this particular note- to ensure that notes can lead to end smoothly.
     	}
     	else if(index >= info.getFocalPoint()+2) { //after that - stricter rules
-			if(Math.abs(interval) > 1) { //leap (3rd or larger)
-	    		if((leaps+1) > steps)
-	        		return false;
+			if(interval >= 2) { //leap (3rd or larger)
+	    		if((leaps+1) >= steps)
+	    			return false;
 	    	}
-	    	if(Math.abs(interval) > 2) { //large leap (4th or larger)
-	        	if((2*largeLeaps) > smallerIntervals)
+	    	if(interval >= 3) { //large leap (4th or larger)
+	        	if((2*largeLeaps) >= smallerIntervals)
 	        		return false;
 	    	}
 		}
 
+		return true;
+    }
+    public boolean checkStepLeapRatios(Note noteBefore,Note proposed,Note noteAfter) {
+    	//precondition: just before notes from pre-determined composition (preFP,FP,etc.)
+    	//2 new intervals are created here - with noteBefore and noteAfter
+    	int leaps = info.getLeapsSoFar();
+    	int largeLeaps = info.getLargeLeapsSoFar();
+    	
+    	int interval = Math.abs(noteBefore.getRelativePitch()-proposed.getRelativePitch());
+    	
+  		if(interval >= 2)
+  			leaps++;
+    	if(interval >= 3)
+    		largeLeaps++;
+	
+    	interval = Math.abs(noteAfter.getRelativePitch()-proposed.getRelativePitch());
+
+    	if(interval >= 2) { //leap (3rd or larger)
+    	    if(leaps >= ((info.getFocalPoint()+1)/2)+1)
+       		    return false;
+   		}
+	   	if(interval >= 3) { //large leap (4th or larger)
+	   		if(largeLeaps >= ((info.getFocalPoint()+1)/3))
+	   			return false;
+    	}
+    	
 		return true;
     }
     public boolean checkForTriTones(Note proposed,Note other) { //guideline 5
@@ -727,73 +820,63 @@ public class Composition implements NotesAndKeys
     }
     public boolean checkOppositeMotionFromBehind(ArrayList<Note> nextNotes,Note proposed) { //guideline 8/9
     	//preconditions: preFPContourType is 1 or 2.
-    				//   nextNotes.get(1) is valid, or nextNotes.get(1) and nextNotes.get(2) are valid
+    				//   nextNotes.get(1) is valid
     				//   just before notes from pre-determined composition (preFP,FP,etc.)
     	
-		//interval between preFP and FP is greater than P5
-    	if(nextNotes.get(1) != null) {
-    		if(nextNotes.get(1).getRelativePitch() - nextNotes.get(0).getRelativePitch() > 4) {
-    			if(proposed.getRelativePitch() < nextNotes.get(0).getRelativePitch())
+		//interval between preFP and note after is greater than P5 
+    	
+    	if(nextNotes.get(1).getRelativePitch() > nextNotes.get(0).getRelativePitch()) {
+    		if(!(proposed.getRelativePitch() > nextNotes.get(0).getRelativePitch()))
+    			return false;
+    	}
+    	
+    	return true;
+    }
+    public boolean checkTriToneStress(Note first,Note second,Note third,Note fourth) { //guideline 10
+    	//precondition: first may or may not exist, all others are valid
+    	//precondition: index that is being composed >= 2
+    	
+    	//step 1 - check for tri-tone && augmented 4th (not diminished 5th)
+    	//scenario 1 - step+3rd over three notes (e.g. B-D-E)
+    	//scenario 2 - completely stepwise over four notes (e.g. B-C-D-E)
+    	int scenario = 0;
+    	if(Math.abs(fourth.getRelativePitch()-second.getRelativePitch()) == 3
+    			&& Math.abs(fourth.midiValue()-second.midiValue()) == 6)
+    		scenario = 1;
+    	if(first != null) {
+    		if(Math.abs(fourth.getRelativePitch()-first.getRelativePitch()) == 3
+        			&& Math.abs(fourth.midiValue()-first.midiValue()) == 6)
+        		scenario = 2;
+    	}
+    	
+    	//step 2 - check for stepwise/linear
+    	if(scenario != 0) { //scenario calls for scrutiny of tri-tone stress
+    		if(scenario == 1) {
+    			if(third.getRelativePitch() > fourth.getRelativePitch()
+    				&& third.getRelativePitch() < second.getRelativePitch()) //descending
+					return false;
+    			else if(third.getRelativePitch() < fourth.getRelativePitch()
+        				&& third.getRelativePitch() > second.getRelativePitch()) //ascending
+    					return false;
+    		}
+    		else { //scenario = 2
+    			/*
+    			int step = fourth.getRelativePitch()-third.getRelativePitch(); //1 - up, -1 - down
+    			if(Math.abs(step) == 1) {
+    				for(int i = 1; i < 3; i++) {
+    					if(lastNotes.get(i).getRelativePitch()-lastNotes.get(i+1).getRelativePitch() != step)
+    						return false;
+    				}
+    			}
+    			*/
+    			boolean allSteps = (Math.abs(fourth.getRelativePitch()-third.getRelativePitch()) == 1)
+    								&& (Math.abs(third.getRelativePitch()-second.getRelativePitch()) == 1)
+    								&& (Math.abs(second.getRelativePitch()-first.getRelativePitch()) == 1);
+    			if(allSteps)
     				return false;
     		}
     	}
-    	else { //nextNotes.get(2) != null
-    		if(nextNotes.get(2).getRelativePitch() - nextNotes.get(0).getRelativePitch() >= 4) {
-    			if(proposed.getRelativePitch() < nextNotes.get(0).getRelativePitch())
-    				return false;
-    		}
-    	}
-    	return true;
-    }
-    public boolean checkOppositeMotionFromAhead(ArrayList<Note> lastNotes,Note proposed) { //guideline 8/9
-    	//preconditions: preFPContourType is 1 or 2.
-					//   lastNotes.size() is 3
-    				//   just after notes from pre-determined composition (preFP,FP,etc.)
     	
-    	//if special structure or interval between preFP and FP greater than P5...
-    	if(lastNotes.get(0).getRelativePitch()-1 == lastNotes.get(1).getRelativePitch()) //additional note
-    		return false;
-    	if(lastNotes.get(0).getRelativePitch()-2 == lastNotes.get(1).getRelativePitch()
-    		&& lastNotes.get(1).getRelativePitch()-2 == lastNotes.get(2).getRelativePitch()) //root position triad
-    		return false;
-    	if(lastNotes.get(0).getRelativePitch()-3 == lastNotes.get(1).getRelativePitch()
-        		&& lastNotes.get(1).getRelativePitch()-2 == lastNotes.get(2).getRelativePitch()) //first inversion triad
-        		return false;
-    	if(lastNotes.get(0).getRelativePitch()-2 == lastNotes.get(1).getRelativePitch()
-        		&& lastNotes.get(1).getRelativePitch()-3 == lastNotes.get(2).getRelativePitch()) //second inversion triad
-        		return false;
-    	if(lastNotes.get(0).getRelativePitch()-3 == lastNotes.get(1).getRelativePitch()
-        		&& lastNotes.get(1).getRelativePitch()-4 == lastNotes.get(2).getRelativePitch()) //5th+4th
-        		return false;
-    	if(lastNotes.get(0).getRelativePitch()-lastNotes.get(1).getRelativePitch() > 4) //interval larger than 5th
-    		return false;
-    	    	
-    	return true;
-    }
-    public boolean checkTriToneStress(ArrayList<Note> lastNotes,Note proposed) { //guideline 10
-    	//precondition: lastNotes.size() is 3.
-    	boolean linear = false; //default value
-    	if(lastNotes.get(1).getRelativePitch()+3 == proposed.getRelativePitch()) {
-    		if(lastNotes.get(1).getRelativePitch()+1 == lastNotes.get(0).getRelativePitch())
-    			linear = true;
-    		else if(lastNotes.get(1).getRelativePitch()+2 == lastNotes.get(0).getRelativePitch())
-    			linear = true;
-    	}
-    	if(lastNotes.get(2).getRelativePitch()+1 == lastNotes.get(1).getRelativePitch()
-    			&& lastNotes.get(1).getRelativePitch()+1 == lastNotes.get(0).getRelativePitch()
-    			&& lastNotes.get(0).getRelativePitch()+1 == proposed.getRelativePitch())
-    		linear = true;
-    	if(lastNotes.get(2).getRelativePitch()-1 == lastNotes.get(1).getRelativePitch()
-    			&& lastNotes.get(1).getRelativePitch()-1 == lastNotes.get(0).getRelativePitch()
-    			&& lastNotes.get(0).getRelativePitch()-1 == proposed.getRelativePitch())
-    		linear = true;
-    	
-    	if(linear) { //notes need to be leading in a single direction
-    		if(Math.abs(lastNotes.get(1).midiValue()-proposed.midiValue()) == 6)
-    			return false;
-    		else if(Math.abs(lastNotes.get(2).midiValue()-proposed.midiValue()) == 6)
-    			return false;
-    	}
     	return true;
     }
     private boolean checkStepFromTonic(Note proposed) { //guideline 11
@@ -814,10 +897,8 @@ public class Composition implements NotesAndKeys
     	
     	return true;
     }
-    private boolean avoidError(Note proposed,int index) { 
-    	//helper method of listValidRange.
-    	//avoid toAvoid while considering for next note.
-    	if(proposed.equals(toAvoid.getErrorNote()) && index == toAvoid.getIndex())
+    private boolean checkIdenticalNotes(Note proposed,Note after) {
+    	if(proposed.midiValue() == after.midiValue())
     		return false;
     	return true;
     }
@@ -827,7 +908,7 @@ public class Composition implements NotesAndKeys
     	else //second line - counterpoint
     		counterpoint[index] = null;
     	info.reduceNotesComposed();
-    	info.updateIntervalInfo(uncomposed, cantusFirmus[index-1]);
+    	info.updateIntervalInfo(uncomposed, cantusFirmus[index-1],cantusFirmus[index+1],false);
     }
     private void composeCounterpoint(boolean istopLineCF) {
     	if(istopLineCF)
@@ -848,5 +929,22 @@ public class Composition implements NotesAndKeys
     }
     public Note[] getCounterpoint() {
     	return counterpoint;
+    }
+    public void comp() {
+    	//TODO
+        this.composeNote(new Note(model),0,true);
+        this.composeNote(new Note(model),cantusFirmus.length-1,true);
+        Note focal = new Note(cantusFirmus[0],5,model);
+        this.composeNote(focal,7,true);
+        this.composeNote(new Note(cantusFirmus[0],2,model),1,true);
+        this.composeNote(new Note(cantusFirmus[0],3,model),2,true);
+        this.composeNote(new Note(cantusFirmus[0],0,model),3,true);
+        this.composeNote(new Note(cantusFirmus[0],-3,model),4,true);
+        Note twoBefore = new Note(cantusFirmus[0],2,model);
+        this.composeNote(twoBefore,5,true);
+        Note oneBefore = new Note(cantusFirmus[0],0,model);
+        boolean b = this.checkStepLeapRatios(twoBefore, oneBefore, focal);
+        System.out.println(b);
+        info.setFocalPoint(7);
     }
 }
