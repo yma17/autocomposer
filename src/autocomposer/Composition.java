@@ -9,33 +9,41 @@ import java.util.ArrayList;
  */
 public class Composition implements NotesAndKeys
 {
+	public Model model; //contains all intrinsic information (e.g. key, mode, etc.) of the music to be composed. See Model class for specifics.
+	
     //counterpoint composed- visually laid out
 	private Note[] cantusFirmus; //the main line; the line that the counterpoint will be written off of.
     private Note[] counterpoint; //the second line; may be written on top or below CF
     
-    //variables of the music
-    private int leapsSoFar; //3rd or higher
-	private int stepsSoFar; //2nd
-	private int largeLeapsSoFar; //4th or higher
-	private int smallerIntervalsSoFar; //3rd or smaller
-	private int maxPitch; //highest relative pitch
-	private int minPitch; //lowest relative pitch
-	private int focalPoint; //index of the FP in CF (nth note minus 1)
-	private int preFPContourType; //of the cantus firmus
-	private int preFPBeginPoint; //note-by-note begins composing here (before FP)
-	private int preFPEndPoint; //note-by-note stops composing here (before FP)
-	private int postFPBeginPoint; //note-by-note begins composing here (after FP)
-	private int postFPEndPoint; //note-by-note stops composing here (after FP)
-	private int notesComposed; //of the current line (once CF is done composing, will be set to 0)
+    //contains variables to be updated during the composition process
+    private CompositionInfo info; //of the current line being composed. Will reset when CF is finished
+    
+    //variables of the cantusFirmus - independent of time points in the algorithm's execution - related to "musical decisions" - "inside" the counterpoint
+	private int maxPitch; //highest relative pitch [pre-comp]
+	private int minPitch; //lowest relative pitch [pre-comp]
+	private int focalPoint; //index of the FP in CF (nth note minus 1) [pre-comp]
+	private int preFPContourType; //of the cantus firmus [pre-comp]
+	private int preFPBeginPoint; //note-by-note begins composing here (before FP) [pre-comp]
+	private int preFPEndPoint; //note-by-note stops composing here (before FP) [pre-comp]
+	private int postFPBeginPoint; //note-by-note begins composing here (after FP) [pre-comp]
+	private int postFPEndPoint; //note-by-note stops composing here (after FP) [pre-comp]
+	
+	private boolean CF; //is CF the current line being composed?
     
     public Composition(Model m)
     {
+    	model = m;
+    	
     	cantusFirmus = new Note[m.getMeasures()];
     	counterpoint = new Note[m.getMeasures()];
         
     	//default values
     	maxPitch = Integer.MAX_VALUE;
     	minPitch = Integer.MIN_VALUE;
+    	
+    	info = new CompositionInfo();
+    	
+    	CF = true; //cantusFirmus is the first line to be composed
     }
     public Note[] getCantusFirmus() {
     	return cantusFirmus;
@@ -43,27 +51,31 @@ public class Composition implements NotesAndKeys
     public Note[] getCounterpoint() {
     	return counterpoint;
     }
-    public void composeNote(Note toBeComposed,int index,boolean CF) {
+    public Note[] getCurrentLine() { //return the current line being composed.
     	if(CF)
+    		return cantusFirmus;
+    	else
+    		return counterpoint;
+    }
+    public void composeNote(Note toBeComposed,int index) {
+    	if(CF) {
     		cantusFirmus[index] = toBeComposed;
-    	else //second line - counterpoint
+			info.updateInfo(toBeComposed, cantusFirmus[index-1], cantusFirmus[index+1], true);
+    	}
+    	else { //second line - counterpoint
     		counterpoint[index] = toBeComposed;
-    	this.incrementNotesComposed();
-    	
-    	if(index > 0 && index < cantusFirmus.length - 1) { //will execute for every note except for first and last note of each line
-    		if(CF)
-    			this.updateIntervalInfo(toBeComposed, cantusFirmus[index-1], cantusFirmus[index+1], true);
-    		else
-    			this.updateIntervalInfo(toBeComposed, counterpoint[index-1], counterpoint[index+1], true);
+			info.updateInfo(toBeComposed, counterpoint[index-1], counterpoint[index+1], true);
     	}
     }
-    public void uncomposeNote(Note uncomposed,int index,boolean CF) { //helper method of composeNoteByNote().
-    	if(CF)
+    public void uncomposeNote(Note uncomposed,int index) { //helper method of composeNoteByNote().
+    	if(CF) {
     		cantusFirmus[index] = null;
-    	else //second line - counterpoint
+	    	info.updateInfo(uncomposed, cantusFirmus[index-1],cantusFirmus[index+1],false);
+    	}
+    	else { //second line - counterpoint
     		counterpoint[index] = null;
-    	this.reduceNotesComposed();
-    	this.updateIntervalInfo(uncomposed, cantusFirmus[index-1],cantusFirmus[index+1],false);
+	    	info.updateInfo(uncomposed, counterpoint[index-1],counterpoint[index+1],false);
+    	}
     }
     public Note getNote(String line, int index) {
     	if(line.equals("CF"))
@@ -71,69 +83,27 @@ public class Composition implements NotesAndKeys
     	else //line = "CP"
     		return counterpoint[index];
     }
+    public Note getNote(int index) {
+    	String line;
+    	if(CF)
+    		line = "CF";
+    	else
+    		line = "CP";
+    	
+    	return this.getNote(line,index);
+    }
     public int getLength() {
     	return cantusFirmus.length;
     }
-    public void updateIntervalInfo(Note note,Note noteBefore,Note noteAfter,boolean composing) { 
-		//composing = true - note has just been composed
-		//composing = false - note has just been removed
-		//Updates leapsSoFar,stepsSoFar,largeLeapsSoFar,smallerIntervalsSoFar.
-		
-		int value; //amount to increase variables by
-		if(composing)
-			value = 1; //increment by 1
-		else
-			value = -1; //reduce by 1
-		
-		if(noteBefore != null) {
-			int intervalWithNoteBefore = Math.abs(note.getRelativePitch()-noteBefore.getRelativePitch());
-			if(intervalWithNoteBefore == 1) //step
-				stepsSoFar += value;
-			else //leap
-				leapsSoFar += value;
-			
-			if(intervalWithNoteBefore <= 2) //smaller interval
-				smallerIntervalsSoFar += value;
-			else //large leaps
-				largeLeapsSoFar += value;
-		}
-		if(noteAfter != null) { //same code with noteAfter
-			int intervalWithNoteAfter = Math.abs(note.getRelativePitch()-noteAfter.getRelativePitch());
-			if(intervalWithNoteAfter == 1)
-				stepsSoFar += value;
-			else
-				leapsSoFar += value;
-			
-			if(intervalWithNoteAfter <= 2)
-				smallerIntervalsSoFar += value;
-			else
-				largeLeapsSoFar += value;
-		}
-	}
-	public int getLeapsSoFar() {
-		return leapsSoFar;
-	}
-	public void setLeapsSoFar(int i) { //for testing
-		leapsSoFar = i;
-	}
-	public int getStepsSoFar() {
-		return stepsSoFar;
-	}
-	public void setStepsSoFar(int i) { //for testing
-		stepsSoFar = i;
-	}
-	public int getLargeLeapsSoFar() {
-		return largeLeapsSoFar;
-	}
-	public void setLargeLeapsSoFar(int i) { //for testing
-		largeLeapsSoFar = i;
-	}
-	public int getSmallerIntervalsSoFar() {
-		return smallerIntervalsSoFar;
-	}
-	public void setSmallerIntervalsSoFar(int i) { //for testing
-		smallerIntervalsSoFar = i;
-	}
+    public Model getModel() {
+    	return model;
+    }
+    public CompositionInfo getInfo() {
+    	return info;
+    }
+    public void resetInfo() {
+    	info = new CompositionInfo();
+    }
 	public int getMaxPitch() {
 		return maxPitch;
 	}
@@ -182,22 +152,15 @@ public class Composition implements NotesAndKeys
 	public void setPostFPEndPoint(int location) { //determined in composeCantusFirmus
 		postFPEndPoint = location;
 	}
-	public int getNotesComposed() {
-		return notesComposed;
+	public void switchLine() {
+		CF = !CF;
 	}
-	public void incrementNotesComposed() {
-		notesComposed++;
-	}
-	public void reduceNotesComposed() {
-		notesComposed--;
+	public void updateInfo(Note note,Note noteBefore,Note noteAfter,boolean composing) {
+		info.updateInfo(note, noteBefore, noteAfter, composing);
 	}
 	public String toString() {
 		//precondition: all instance variables initialized
-		return "leapsSoFar: " + leapsSoFar + "\n"
-				+ "stepsSoFar: " + stepsSoFar + "\n"
-				+ "largeLeapsSoFar: " + largeLeapsSoFar + "\n"
-				+ "smallerIntervalsSoFar: " + smallerIntervalsSoFar + "\n"
-				+ "maxPitch: " + maxPitch + "\n"
+		return	"maxPitch: " + maxPitch + "\n"
 				+ "minPitch: " + minPitch + "\n"
 				+ "focalPoint: " + focalPoint + "\n"
 				+ "preFPContourType: " + preFPContourType + "\n"
@@ -205,6 +168,7 @@ public class Composition implements NotesAndKeys
 				+ "preFPEndPoint: " + preFPEndPoint + "\n"
 				+ "postFPBeginPoint: " + postFPBeginPoint + "\n"
 				+ "postFPEndPoint: " + postFPEndPoint + "\n"
-				+ "notesComposed: " + notesComposed;
+				+ "\n" + "info variables: " + "\n"
+				+ info.toString();
 	}
 }

@@ -33,7 +33,7 @@ public class Note implements NotesAndKeys
 		midiValue = (12 * this.octave) + this.pitch + 12;	
 		relativePitch = 0;
 	}
-	public Note(Note firstNote,int relativePitch,Model m) {
+	public Note(int relativePitch,Model m) {
 		//precondition: first note of CF (relativeNote) created already
 		//creates note by comparing to first note of the line
 		
@@ -44,7 +44,7 @@ public class Note implements NotesAndKeys
 		pitch = NoteUtilities.findPitch(m.getSpecificArray()[arrayValue],m.getKeyIsSharp());
 		
 		//adjust octave as necessary
-		octave = firstNote.getOctave(); //tonic
+		octave = m.getOctaveOfCF(); //octave of the tonic
 		int octaveRelPitchDistance = 0; //distance of octaves in relative pitches. Will increase/decrease by 7 at a time with each octave.
 	    if(relativePitch <= m.getOctaveDownValue()) { //if relativePitch is lower than the value needed to lower the octave, the octave must be lowered
 	    	while(m.getOctaveDownValue() - relativePitch + octaveRelPitchDistance >= 7) {
@@ -79,7 +79,7 @@ public class Note implements NotesAndKeys
 	public int getOctave() {
 		return octave;
 	}
-	public int getRelativePitch() {
+	public int getRelPitch() {
 		return relativePitch;
 	}
 	public String toString() { //for testing

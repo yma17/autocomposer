@@ -6,6 +6,10 @@ import java.util.Arrays;
  * containing necessary intrinsic information of the counterpoint such as key,
  * mode, length, cantus firmus orientation, etc.
  * 
+ * All variables independent of musical decisions (e.g. the notes, how they are oriented) to be made during the composition process
+ * 
+ * "outside of the counterpoint"
+ * 
  * Variable of the Composition class.
  */
 public class Model implements NotesAndKeys
@@ -29,6 +33,7 @@ public class Model implements NotesAndKeys
         octaveOfCF = determineOctaveofCF(key,topLineIsCF,keyIsSharp);
         this.specificNotes = determineSpecificNotes(key,mode,keyIsSharp);
         this.determineOctaveValues();
+        
     }
     public Model(String key, String mode, int measures) //in presence of user control, set user-preferred key, mode, length. Randomly determines CF.
     {
@@ -275,6 +280,7 @@ public class Model implements NotesAndKeys
 	    this.octaveUpValue = octaveUpPitch;
 	    this.octaveDownValue = octaveDownPitch;
     }
+
     
     //accessor methods
     public String getKey()
